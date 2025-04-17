@@ -220,7 +220,7 @@ model usuarios {
   refresh_token                                                  String?                 @db.VarChar(255)
   two_factor_enabled                                             Boolean?
   password_reset_token                                           String?                 @db.VarChar(255)
-  password_reset_expires                                         String?                 @db.VarChar(255)
+  password_reset_expires                                         DateTime?               @db.Timestamp(6)
   calificaciones                                                 calificaciones[]
   colecciones                                                    colecciones[]
   comentarios                                                    comentarios[]

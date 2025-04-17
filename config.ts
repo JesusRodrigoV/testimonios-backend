@@ -6,6 +6,12 @@ export const config = {
   emailUser: process.env.EMAIL_USER || "",
   emailPassword: process.env.EMAIL_PASSWORD || "",
   frontendUrl: process.env.FRONTEND_URL || "http://localhost:4200",
+  roles: {
+    admin: 1,
+    curador: 2,
+    investigador: 3,
+    visitante: 4,
+  },
 };
 
 export default config;

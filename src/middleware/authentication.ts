@@ -1,65 +1,69 @@
-import { IncomingMessage, ServerResponse } from "http";
 import { verify } from "jsonwebtoken";
-import { isTokenRevoked } from "../models";
-import config from "../../config";
-import prisma from "src/lib/prisma";
+import prisma from "../lib/prisma";
+import config from "config";
+import type { NextFunction, Request, Response } from "express";
 
-export interface JwtPayload {
+import type { JwtPayload as JWT } from "jsonwebtoken";
+
+export interface CustomJwtPayload extends JWT {
   id_usuario: number;
   id_rol: number;
-  iat?: number;
-  exp?: number;
-}
-
-export interface AuthenticatedRequest extends IncomingMessage {
-  user?: JwtPayload;
 }
 
 export const authenticateToken = async (
-  req: AuthenticatedRequest,
-  res: ServerResponse,
-): Promise<boolean> => {
-  const authHeader = req.headers["authorization"];
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  const authHeader = req.headers.authorization;
   const token = authHeader?.split(" ")[1];
 
   if (!token) {
-    sendError(res, 401, "Authentication token required");
-    return false;
+    res.status(401).json({ message: "Token de autenticación requerido" });
+    return;
   }
 
   try {
-    const decoded = verify(token, config.jwtSecret) as JwtPayload;
+    const decoded = verify(token, config.jwtSecret) as CustomJwtPayload;
 
-    // Verificar si el token de refresco está vigente en la base de datos
+    // Si es un token temporal de configuración, permitir solo endpoints específicos
+    if (decoded.setupMode) {
+      if (!req.path.includes("/verify-2fa")) {
+        res
+          .status(403)
+          .json({ message: "Debe completar la configuración 2FA" });
+        return;
+      }
+      req.user = decoded;
+      next();
+      return;
+    }
+
+    // Si es un token temporal pendiente de 2FA
+    if (decoded.pending2FA) {
+      if (!req.path.includes("/login")) {
+        res.status(403).json({ message: "Debe completar la verificación 2FA" });
+        return;
+      }
+      req.user = decoded;
+      next();
+      return;
+    }
+
+    // Para tokens normales, verificar revocación
     const user = await prisma.usuarios.findUnique({
       where: { id_usuario: decoded.id_usuario },
-      select: { refresh_token: true },
+      select: { refresh_token: true, two_factor_enabled: true },
     });
 
     if (!user) {
-      sendError(res, 403, "User not found");
-      return false;
+      res.status(403).json({ message: "Usuario no encontrado" });
+      return;
     }
 
     req.user = decoded;
-    return true;
-  } catch (error) {
-    sendError(res, 403, "Invalid or expired token", error);
-    return false;
+    next();
+  } catch (_error) {
+    res.status(403).json({ message: "Token inválido o expirado" });
   }
 };
-
-function sendError(
-  res: ServerResponse,
-  code: number,
-  message: string,
-  error?: unknown,
-) {
-  res.statusCode = code;
-  res.end(
-    JSON.stringify({
-      message,
-      error: error instanceof Error ? error.message : undefined,
-    }),
-  );
-}

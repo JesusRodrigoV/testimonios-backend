@@ -1,5 +1,5 @@
 //model/user.ts
-import { compare, hash } from "bcrypt";
+import { compare, hash } from "bcryptjs";
 import speakeasy from "speakeasy";
 import QRCode from "qrcode";
 import crypto from "crypto";

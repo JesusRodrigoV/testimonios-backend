@@ -53,7 +53,6 @@ export const authenticateToken = async (
   try {
     const decoded = verify(token, config.jwtSecret) as CustomJwtPayload;
 
-    // Si es un token temporal de configuración, permitir solo endpoints específicos
     if (decoded.setupMode) {
       if (!req.path.includes("/verify-2fa")) {
         res
@@ -66,7 +65,6 @@ export const authenticateToken = async (
       return;
     }
 
-    // Si es un token temporal pendiente de 2FA
     if (decoded.pending2FA) {
       if (!req.path.includes("/login")) {
         res.status(403).json({ message: "Debe completar la verificación 2FA" });
@@ -77,7 +75,6 @@ export const authenticateToken = async (
       return;
     }
 
-    // Para tokens normales, verificar revocación
     const user = await prisma.usuarios.findUnique({
       where: { id_usuario: decoded.id_usuario },
       select: { refresh_token: true, two_factor_enabled: true },

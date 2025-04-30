@@ -106,8 +106,12 @@ export const adminPostUsers = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
+  console.log("Received data:", req.body); // Add this line
+  console.log("Headers:", req.headers);
+  console.log("Body:", req.body);
   const result = safeParse(userSchema, req.body);
   if (!result.success) {
+    console.log("Validation errors:", result.issues); // Add this line
     res.status(400).json({
       message: "Bad Request",
       errors: result.issues,
@@ -171,7 +175,7 @@ export const adminPutUsers = async (
     res.status(400).json({ message: "ID de usuario inválido" });
     return;
   }
-  const { email, nombre, biografia, id_rol } = req.body;
+  const { email, nombre, biografia, id_rol, profile_image } = req.body;
 
   try {
     const updatedUser = await prisma.usuarios.update({
@@ -181,6 +185,7 @@ export const adminPutUsers = async (
         nombre,
         biografia,
         id_rol,
+        profile_image,
       },
       select: {
         id_usuario: true,

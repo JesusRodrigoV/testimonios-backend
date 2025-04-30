@@ -10,7 +10,6 @@ import {
   nullable,
   object,
   pipe,
-  regex,
   string,
   type InferInput,
 } from "valibot";
@@ -32,10 +31,6 @@ const nombreSchema = pipe(
   string(),
   minLength(3, "El nombre no puede tener menos de 3 caracteres"),
   maxLength(20, "El nombre no puede tener mas de 20 caracteres"),
-  regex(
-    /^[a-zA-Z0-9_]+$/,
-    "El nombre solo puede contener letras, numeros, y guiones bajos",
-  ),
 );
 const biografiaSchema = pipe(nullable(string(), "Sin informacion"));
 

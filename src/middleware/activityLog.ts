@@ -20,8 +20,10 @@ export const logActivity = async (
             body: req.body,
             duration: Date.now() - start,
           }),
-          id_usuario: req.user?.id_usuario || null,
-          fecha: new Date(),
+          id_usuario: req.user?.id_usuario ?? null,
+          fecha: new Date(
+            new Date().toLocaleString("en-US", { timeZone: "America/La_Paz" }),
+          ),
         },
       });
     } catch (error) {

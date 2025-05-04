@@ -13,6 +13,28 @@ export const Rol = {
 
 export type RoleKeys = keyof typeof Rol;
 
+export const checkDownloadPermission = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const { id } = req.params;
+  const testimonio = await prisma.testimonios.findUnique({
+    where: { id_testimonio: Number(id) },
+    include: { permisos: true },
+  });
+
+  const hasPermission = testimonio?.permisos.some(
+    (p) => p.id_rol === req.user!.id_rol && p.permiso === "DOWNLOAD",
+  );
+
+  if (!hasPermission) {
+    return res.status(403).json({ error: "No tiene permiso para descargar" });
+  }
+
+  next();
+};
+
 export const authorizeRoles = (...allowedRoles: number[]) => {
   return async (
     req: Request,

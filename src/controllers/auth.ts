@@ -21,6 +21,7 @@ import { sign, verify } from "jsonwebtoken";
 import config from "config";
 import { send2FASetupEmail, sendPasswordResetEmail } from "@app/lib/email";
 import prisma from "@app/lib/prisma";
+import { uploadMedia } from "@app/lib/cloudinary";
 
 export const authProfile = async (
   req: Request,

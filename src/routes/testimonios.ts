@@ -1,34 +1,36 @@
 import express from "express";
 import {
-  uploadFromUrl,
-  createTestimonio,
-  getTestimonioOptions,
-  validarTestimonio,
-} from "../controllers/mediaController";
+  createTestimony,
+  getTestimony,
+  searchTestimonies,
+  validateTestimony,
+  getTestimonyVersions,
+  getTestimonyMap,
+  deleteTestimony,
+} from "@app/controllers/media";
 import { authenticateToken } from "@app/middleware/authentication";
 import { authorizeRoles } from "@app/middleware/authorization";
-import { Rol } from "@app/middleware/authorization";
+import { Rol } from "@app/models";
 
-const testimoniosRouter = express.Router();
+const router = express.Router();
 
-testimoniosRouter.get("/opciones", authenticateToken, getTestimonioOptions);
-testimoniosRouter.post(
-  "/upload-from-url",
+router.post("/", authenticateToken, createTestimony);
+router.post(
+  "/validate",
   authenticateToken,
-  authorizeRoles(Rol.ADMIN, Rol.CURADOR, Rol.INVESTIGADOR),
-  uploadFromUrl,
+  authorizeRoles(Rol.ADMIN, Rol.CURATOR),
+  validateTestimony,
 );
-testimoniosRouter.post(
-  "/testimonio",
+router.delete(
+  "/:id",
   authenticateToken,
-  authorizeRoles(Rol.ADMIN, Rol.CURADOR, Rol.INVESTIGADOR),
-  createTestimonio,
-);
-testimoniosRouter.patch(
-  "/testimonio/:id_testimonio/validar",
-  authenticateToken,
-  authorizeRoles(Rol.ADMIN, Rol.CURADOR),
-  validarTestimonio,
+  authorizeRoles(Rol.ADMIN, Rol.CURATOR),
+  deleteTestimony,
 );
 
-export default testimoniosRouter;
+router.get("/:id", getTestimony);
+router.get("/", searchTestimonies);
+router.get("/:id/versions", getTestimonyVersions);
+router.get("/map/data", getTestimonyMap);
+
+export default router;

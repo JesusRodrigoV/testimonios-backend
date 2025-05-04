@@ -1,38 +1,37 @@
-import { v2 as cloudinary } from "cloudinary";
+import { v2 as cloudinary, type UploadApiOptions } from "cloudinary";
+import type { Request } from "express";
 
 cloudinary.config({
-  cloud_name: "dk9yiccx7",
-  api_key: "957593388719322",
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
 });
 
-export const uploadMedia = async (fileUrl: string, options = {}) => {
-  try {
-    const result = await cloudinary.uploader.upload(fileUrl, {
-      resource_type: "auto",
-      allowed_formats: ["mp4", "mov", "avi", "mp3", "wav"],
-      ...options,
-    });
-
-    return {
-      public_id: result.public_id,
-      url: result.secure_url,
-      duration: result.duration,
-      format: result.format,
-    };
-  } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
-    throw new Error(`Cloudinary Error: ${errorMessage}`);
+export const uploadMedia = async (file: Request["file"], folder: string) => {
+  if (!file) {
+    throw new Error("No file provided");
   }
+
+  const options: UploadApiOptions = {
+    use_filename: true,
+    unique_filename: true,
+    overwrite: true,
+    resource_type: "auto",
+    folder: `legado_bolivia/${folder}`,
+    allowed_formats: ["jpg", "png", "mp4", "mov", "mp3", "wav"],
+    quality: "auto",
+    fetch_format: "auto",
+  };
+  const result = await cloudinary.uploader.upload(file.path, options);
+  console.log(result.public_id);
+  return {
+    url: result.secure_url,
+    public_id: result.public_id,
+    duration: result.duration,
+    format: result.format,
+  };
 };
 
-export const generateOptimizedUrl = (publicId: string) => {
-  return cloudinary.url(publicId, {
-    fetch_format: "auto",
-    quality: "auto",
-    crop: "scale",
-    width: 1280, // Para videos
-  });
+export const deleteMedia = async (publicId: string) => {
+  return cloudinary.uploader.destroy(publicId);
 };

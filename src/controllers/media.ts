@@ -34,7 +34,11 @@ export const getTestimony = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
     if (!id) throw new Error("ID de testimonio requerido");
-    const testimony = await testimonyService.getTestimony(parseInt(id));
+    const testimony = await testimonyService.getTestimony(
+      parseInt(id),
+      req.user?.id_usuario || 0,
+      req.user?.id_rol || 4,
+    );
     res.json(testimony);
   } catch (error) {
     res.status(404).json({
@@ -57,6 +61,7 @@ export const searchTestimonies = async (req: Request, res: Response) => {
       page?: number;
       limit?: number;
       highlighted?: boolean;
+      status?: string;
     } = {
       keyword: req.query.keyword as string,
       dateFrom: req.query.dateFrom as string,
@@ -72,9 +77,14 @@ export const searchTestimonies = async (req: Request, res: Response) => {
       page: req.query.page ? parseInt(req.query.page as string) : undefined,
       limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
       highlighted: req.query.highlighted === "true" ? true : undefined,
+      status: req.query.status as string,
     };
 
-    const result = await testimonyService.searchTestimonies(params);
+    const result = await testimonyService.searchTestimonies(
+      params,
+      req.user?.id_usuario || 0,
+      req.user?.id_rol || 4,
+    );
     res.json(result);
   } catch (error) {
     res.status(400).json({
@@ -91,6 +101,7 @@ export const validateTestimony = async (req: Request, res: Response) => {
     const result = await testimonyService.validateTestimony(
       testimonyId,
       req.user!.id_usuario,
+      req.user!.id_rol,
       approve,
     );
     res.json(result);
@@ -134,12 +145,79 @@ export const deleteTestimony = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
     if (!id) throw new Error("ID de testimonio requerido");
-    await testimonyService.deleteTestimony(parseInt(id), req.user!.id_usuario);
+    await testimonyService.deleteTestimony(
+      parseInt(id),
+      req.user!.id_usuario,
+      req.user!.id_rol,
+    );
     res.json({ message: "Testimonio eliminado" });
   } catch (error) {
     res.status(400).json({
       error:
         error instanceof Error ? error.message : "Error al eliminar testimonio",
+    });
+  }
+};
+
+// Nuevos endpoints para categorías, etiquetas, eventos, medios y estados
+export const getAllCategories = async (req: Request, res: Response) => {
+  try {
+    const categories = await testimonyService.getAllCategories();
+    res.json(categories);
+  } catch (error) {
+    res.status(400).json({
+      error:
+        error instanceof Error ? error.message : "Error al obtener categorías",
+    });
+  }
+};
+
+export const getAllTags = async (req: Request, res: Response) => {
+  try {
+    const tags = await testimonyService.getAllTags();
+    res.json(tags);
+  } catch (error) {
+    res.status(400).json({
+      error:
+        error instanceof Error ? error.message : "Error al obtener etiquetas",
+    });
+  }
+};
+
+export const getAllEvents = async (req: Request, res: Response) => {
+  try {
+    const events = await testimonyService.getAllEvents();
+    res.json(events);
+  } catch (error) {
+    res.status(400).json({
+      error:
+        error instanceof Error ? error.message : "Error al obtener eventos",
+    });
+  }
+};
+
+export const getAllMediaTypes = async (req: Request, res: Response) => {
+  try {
+    const mediaTypes = await testimonyService.getAllMediaTypes();
+    res.json(mediaTypes);
+  } catch (error) {
+    res.status(400).json({
+      error:
+        error instanceof Error
+          ? error.message
+          : "Error al obtener tipos de medios",
+    });
+  }
+};
+
+export const getAllStatuses = async (req: Request, res: Response) => {
+  try {
+    const statuses = await testimonyService.getAllStatuses();
+    res.json(statuses);
+  } catch (error) {
+    res.status(400).json({
+      error:
+        error instanceof Error ? error.message : "Error al obtener estados",
     });
   }
 };

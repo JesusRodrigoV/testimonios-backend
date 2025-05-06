@@ -7,6 +7,11 @@ import {
   getTestimonyVersions,
   getTestimonyMap,
   deleteTestimony,
+  getAllCategories,
+  getAllTags,
+  getAllEvents,
+  getAllMediaTypes,
+  getAllStatuses,
 } from "@app/controllers/media";
 import { authenticateToken } from "@app/middleware/authentication";
 import { authorizeRoles } from "@app/middleware/authorization";
@@ -27,10 +32,14 @@ router.delete(
   authorizeRoles(Rol.ADMIN, Rol.CURATOR),
   deleteTestimony,
 );
-
-router.get("/:id", getTestimony);
-router.get("/", searchTestimonies);
-router.get("/:id/versions", getTestimonyVersions);
-router.get("/map/data", getTestimonyMap);
+router.get("/:id", authenticateToken, getTestimony);
+router.get("/", authenticateToken, searchTestimonies);
+router.get("/:id/versions", authenticateToken, getTestimonyVersions);
+router.get("/map/data", authenticateToken, getTestimonyMap);
+router.get("/categories", authenticateToken, getAllCategories);
+router.get("/tags", authenticateToken, getAllTags);
+router.get("/events", authenticateToken, getAllEvents);
+router.get("/media-types", authenticateToken, getAllMediaTypes);
+router.get("/statuses", authenticateToken, getAllStatuses);
 
 export default router;

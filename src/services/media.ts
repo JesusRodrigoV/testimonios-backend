@@ -6,7 +6,45 @@ import {
 import { PrismaClient, Prisma } from "@generated/prisma";
 import { parse } from "valibot";
 
+// Definimos un tipo para los IDs de roles
+type RoleId = 1 | 2 | 3 | 4;
+
+// Definimos la estructura de los permisos para un rol
+interface RolePermission {
+  canViewStatuses: string[];
+  canValidate: boolean;
+  canDelete: boolean;
+}
+
 const prisma = new PrismaClient();
+
+// Mapa de permisos por rol
+const rolePermissions: Record<RoleId, RolePermission> = {
+  1: {
+    // Administrador
+    canViewStatuses: ["Pendiente", "Aprobado", "Rechazado"],
+    canValidate: true,
+    canDelete: true,
+  },
+  2: {
+    // Curador
+    canViewStatuses: ["Pendiente", "Aprobado", "Rechazado"],
+    canValidate: true,
+    canDelete: true,
+  },
+  3: {
+    // Investigador
+    canViewStatuses: ["Aprobado"],
+    canValidate: false,
+    canDelete: false,
+  },
+  4: {
+    // Visitante
+    canViewStatuses: ["Aprobado"],
+    canValidate: false,
+    canDelete: false,
+  },
+};
 
 export const testimonyService = {
   createTestimony: async (data: TestimonyInput, userId: number) => {
@@ -113,7 +151,9 @@ export const testimonyService = {
     };
   },
 
-  getTestimony: async (id: number) => {
+  getTestimony: async (id: number, userId: number, userRole: number) => {
+    const permissions =
+      rolePermissions[userRole as RoleId] || rolePermissions[4];
     const testimony = await prisma.testimonios.findUnique({
       where: { id_testimonio: id },
       select: {
@@ -146,6 +186,10 @@ export const testimonyService = {
       throw new Error("Testimonio no encontrado");
     }
 
+    if (!permissions.canViewStatuses.includes(testimony.estado.nombre)) {
+      throw new Error("No autorizado para ver este testimonio");
+    }
+
     return {
       id: testimony.id_testimonio,
       title: testimony.titulo,
@@ -168,19 +212,35 @@ export const testimonyService = {
     };
   },
 
-  searchTestimonies: async (params: {
-    keyword?: string;
-    dateFrom?: string;
-    dateTo?: string;
-    authorId?: number;
-    category?: string;
-    tag?: string;
-    eventId?: number;
-    page?: number;
-    limit?: number;
-    highlighted?: boolean;
-  }) => {
-    const where: Prisma.testimoniosWhereInput = { id_estado: 2 }; // Solo aprobados
+  searchTestimonies: async (
+    params: {
+      keyword?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      authorId?: number;
+      category?: string;
+      tag?: string;
+      eventId?: number;
+      page?: number;
+      limit?: number;
+      highlighted?: boolean;
+      status?: string;
+    },
+    userId: number,
+    userRole: number,
+  ) => {
+    console.log(
+      "Parámetros de búsqueda:",
+      params,
+      "Usuario ID:",
+      userId,
+      "Rol:",
+      userRole,
+    );
+
+    const permissions =
+      rolePermissions[userRole as RoleId] || rolePermissions[4];
+    const where: Prisma.testimoniosWhereInput = {};
 
     if (params.keyword) {
       where.OR = [
@@ -222,9 +282,31 @@ export const testimonyService = {
       where.testimonios_eventos = { some: { id_evento: params.eventId } };
     }
 
+    if (params.status) {
+      const statusId = {
+        Pendiente: 1,
+        Aprobado: 2,
+        Rechazado: 3,
+      }[params.status];
+      if (!statusId || !permissions.canViewStatuses.includes(params.status)) {
+        throw new Error(
+          "No tienes permiso para ver testimonios con este estado",
+        );
+      }
+      where.id_estado = statusId;
+    } else {
+      where.id_estado = {
+        in: permissions.canViewStatuses.map((status) =>
+          status === "Pendiente" ? 1 : status === "Aprobado" ? 2 : 3,
+        ),
+      };
+    }
+
     const page = params.page ?? 1;
-    const limit = params.highlighted ? 3 : (params.limit ?? 5); // 3 para destacados, 5 por defecto
+    const limit = params.highlighted ? 3 : (params.limit ?? 5);
     const skip = (page - 1) * limit;
+
+    console.log("Cláusula where de Prisma:", where);
 
     const select = {
       id_testimonio: true,
@@ -256,15 +338,14 @@ export const testimonyService = {
         skip,
         take: limit,
         orderBy: params.highlighted
-          ? [
-              { calificaciones: { _count: "desc" } }, // Priorizar por número de calificaciones
-              { created_at: "desc" },
-            ]
+          ? [{ calificaciones: { _count: "desc" } }, { created_at: "desc" }]
           : { created_at: "desc" },
         select,
       }),
       prisma.testimonios.count({ where }),
     ]);
+
+    console.log("Testimonios encontrados:", testimonies);
 
     return {
       data: testimonies.map((t) => ({
@@ -292,14 +373,21 @@ export const testimonyService = {
 
   validateTestimony: async (
     testimonyId: number,
-    curatorId: number,
+    userId: number,
+    userRole: number,
     approve: boolean,
   ) => {
+    const permissions =
+      rolePermissions[userRole as RoleId] || rolePermissions[4];
+    if (!permissions.canValidate) {
+      throw new Error("No tienes permiso para validar testimonios");
+    }
+
     const testimony = await prisma.testimonios.update({
       where: { id_testimonio: testimonyId },
       data: {
         id_estado: approve ? 2 : 3,
-        verificado_por: curatorId,
+        verificado_por: userId,
         fecha_validacion: new Date(),
         updated_at: new Date(),
       },
@@ -314,10 +402,10 @@ export const testimonyService = {
           })) + 1,
         cambios: {
           tipo: approve ? "APROBACION" : "RECHAZO",
-          detalles: `Testimonio ${approve ? "aprobado" : "rechazado"} por curador`,
+          detalles: `Testimonio ${approve ? "aprobado" : "rechazado"} por usuario ${userId}`,
         },
         id_testimonio: testimonyId,
-        editor_id_usuario: curatorId,
+        editor_id_usuario: userId,
       },
     });
 
@@ -360,7 +448,17 @@ export const testimonyService = {
     }));
   },
 
-  deleteTestimony: async (testimonyId: number, userId: number) => {
+  deleteTestimony: async (
+    testimonyId: number,
+    userId: number,
+    userRole: number,
+  ) => {
+    const permissions =
+      rolePermissions[userRole as RoleId] || rolePermissions[4];
+    if (!permissions.canDelete) {
+      throw new Error("No tienes permiso para eliminar testimonios");
+    }
+
     const testimony = await prisma.testimonios.findUnique({
       where: { id_testimonio: testimonyId },
       select: { url_medio: true },
@@ -397,5 +495,87 @@ export const testimonyService = {
         `Error al eliminar testimonio: ${error instanceof Error ? error.message : "Error desconocido"}`,
       );
     }
+  },
+
+  // Funciones para obtener categorías, etiquetas, eventos, medios y estados
+  getAllCategories: async () => {
+    const categories = await prisma.categorias.findMany({
+      select: {
+        id_categoria: true,
+        nombre: true,
+        descripcion: true,
+      },
+      orderBy: { nombre: "asc" },
+    });
+
+    return categories.map((c) => ({
+      id: c.id_categoria,
+      name: c.nombre,
+      description: c.descripcion,
+    }));
+  },
+
+  getAllTags: async () => {
+    const tags = await prisma.etiquetas.findMany({
+      select: {
+        id_etiquetas: true,
+        nombre: true,
+      },
+      orderBy: { nombre: "asc" },
+    });
+
+    return tags.map((t) => ({
+      id: t.id_etiquetas,
+      name: t.nombre,
+    }));
+  },
+
+  getAllEvents: async () => {
+    const events = await prisma.eventos_historicos.findMany({
+      select: {
+        id_evento: true,
+        nombre: true,
+        descripcion: true,
+        fecha: true,
+      },
+      orderBy: { fecha: "desc" },
+    });
+
+    return events.map((e) => ({
+      id: e.id_evento,
+      name: e.nombre,
+      description: e.descripcion,
+      date: e.fecha,
+    }));
+  },
+
+  getAllMediaTypes: async () => {
+    const media = await prisma.medio.findMany({
+      select: {
+        id_medio: true,
+        nombre: true,
+      },
+      orderBy: { nombre: "asc" },
+    });
+
+    return media.map((m) => ({
+      id: m.id_medio,
+      name: m.nombre,
+    }));
+  },
+
+  getAllStatuses: async () => {
+    const statuses = await prisma.estado.findMany({
+      select: {
+        id_estado: true,
+        nombre: true,
+      },
+      orderBy: { id_estado: "asc" },
+    });
+
+    return statuses.map((s) => ({
+      id: s.id_estado,
+      name: s.nombre,
+    }));
   },
 };

@@ -19,7 +19,7 @@ export const testimonyService = {
         titulo: validatedData.title,
         descripcion: validatedData.description,
         contenido_texto: validatedData.content || "Sin información",
-        url_medio: validatedData.mediaUrl,
+        url_medio: validatedData.url,
         duracion: validatedData.duration ?? 0,
         latitud: validatedData.latitude
           ? new Prisma.Decimal(validatedData.latitude)

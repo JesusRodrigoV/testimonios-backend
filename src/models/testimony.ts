@@ -1,16 +1,14 @@
 import {
   array,
-  enum_,
   maxLength,
   minLength,
-  minSize,
+  nullable,
   number,
   object,
   optional,
   pipe,
   string,
   type InferInput,
-  type InferOutput,
 } from "valibot";
 
 const titleSchema = pipe(string(), minLength(5), maxLength(255));
@@ -18,10 +16,10 @@ const descriptionSchema = pipe(string(), minLength(5), maxLength(1000));
 const contentSchema = pipe(string(), minLength(5), maxLength(1000));
 const tagsSchema = pipe(string(), minLength(1), maxLength(255));
 const categorySchema = pipe(string(), minLength(1), maxLength(255));
-const eventIdSchema = pipe(number());
-const latitudeSchema = pipe(number());
-const longitudeSchema = pipe(number());
-const mediaUrlSchema = pipe(string("La URL del medio debe ser un texto"));
+const eventIdSchema = nullable(number());
+const latitudeSchema = nullable(number());
+const longitudeSchema = nullable(number());
+const urlSchema = pipe(string("La URL del medio debe ser un texto"));
 const durationSchema = pipe(number("La duración debe ser un número"));
 const formatSchema = pipe(string());
 
@@ -31,7 +29,7 @@ const testimonySchema = object({
   content: contentSchema,
   tags: tagsSchema,
   category: categorySchema,
-  mediaUrl: mediaUrlSchema,
+  url: urlSchema,
   duration: durationSchema,
   format: formatSchema,
   eventId: eventIdSchema,
@@ -45,7 +43,7 @@ export const inputTestimonySchema = object({
   content: optional(testimonySchema.entries.content),
   tags: optional(array(testimonySchema.entries.tags)),
   categories: optional(array(testimonySchema.entries.category)),
-  mediaUrl: testimonySchema.entries.mediaUrl,
+  url: testimonySchema.entries.url,
   duration: optional(testimonySchema.entries.duration),
   format: testimonySchema.entries.format,
   eventId: optional(testimonySchema.entries.eventId),

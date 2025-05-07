@@ -3,6 +3,7 @@ import cors from "cors";
 import config from "./config";
 import { authRouter } from "./src/routes/auth";
 import testimoniosRouter from "@app/routes/testimonios";
+import categoriaRouter from "@app/routes/CategoriaRoutes"; 
 
 const app = express();
 
@@ -11,6 +12,7 @@ app.use(express.json());
 
 app.use("/auth", authRouter);
 app.use("/media", testimoniosRouter);
+app.use("/categorias", categoriaRouter);
 
 app.use(
   (

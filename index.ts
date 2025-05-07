@@ -4,6 +4,8 @@ import config from "./config";
 import { authRouter } from "./src/routes/auth";
 import testimoniosRouter from "@app/routes/testimonios";
 import categoriaRouter from "@app/routes/CategoriaRoutes"; 
+import etiquetaRouter from "@app/routes/etiqueta";
+import eventoRouter from "@app/routes/evento";
 
 const app = express();
 
@@ -12,7 +14,9 @@ app.use(express.json());
 
 app.use("/auth", authRouter);
 app.use("/media", testimoniosRouter);
-app.use("/categorias", categoriaRouter);
+app.use("/categories", categoriaRouter);
+app.use("/tags", etiquetaRouter);
+app.use("/events", eventoRouter);
 
 app.use(
   (

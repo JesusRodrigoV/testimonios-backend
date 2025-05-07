@@ -8,8 +8,6 @@ import {
   getTestimonyMap,
   deleteTestimony,
   getAllCategories,
-  getAllTags,
-  getAllEvents,
   getAllMediaTypes,
   getAllStatuses,
 } from "@app/controllers/media";
@@ -36,9 +34,7 @@ router.get("/:id", authenticateToken, getTestimony);
 router.get("/", authenticateToken, searchTestimonies);
 router.get("/:id/versions", authenticateToken, getTestimonyVersions);
 router.get("/map/data", authenticateToken, getTestimonyMap);
-router.get("/categories", authenticateToken, getAllCategories);
-router.get("/tags", authenticateToken, getAllTags);
-router.get("/events", authenticateToken, getAllEvents);
+router.get("/categories", getAllCategories);
 router.get("/media-types", authenticateToken, getAllMediaTypes);
 router.get("/statuses", authenticateToken, getAllStatuses);
 

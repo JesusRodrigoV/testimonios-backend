@@ -172,29 +172,9 @@ export const getAllCategories = async (req: Request, res: Response) => {
   }
 };
 
-export const getAllTags = async (req: Request, res: Response) => {
-  try {
-    const tags = await testimonyService.getAllTags();
-    res.json(tags);
-  } catch (error) {
-    res.status(400).json({
-      error:
-        error instanceof Error ? error.message : "Error al obtener etiquetas",
-    });
-  }
-};
 
-export const getAllEvents = async (req: Request, res: Response) => {
-  try {
-    const events = await testimonyService.getAllEvents();
-    res.json(events);
-  } catch (error) {
-    res.status(400).json({
-      error:
-        error instanceof Error ? error.message : "Error al obtener eventos",
-    });
-  }
-};
+
+
 
 export const getAllMediaTypes = async (req: Request, res: Response) => {
   try {

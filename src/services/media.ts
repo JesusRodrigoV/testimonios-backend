@@ -515,39 +515,6 @@ export const testimonyService = {
     }));
   },
 
-  getAllTags: async () => {
-    const tags = await prisma.etiquetas.findMany({
-      select: {
-        id_etiquetas: true,
-        nombre: true,
-      },
-      orderBy: { nombre: "asc" },
-    });
-
-    return tags.map((t) => ({
-      id: t.id_etiquetas,
-      name: t.nombre,
-    }));
-  },
-
-  getAllEvents: async () => {
-    const events = await prisma.eventos_historicos.findMany({
-      select: {
-        id_evento: true,
-        nombre: true,
-        descripcion: true,
-        fecha: true,
-      },
-      orderBy: { fecha: "desc" },
-    });
-
-    return events.map((e) => ({
-      id: e.id_evento,
-      name: e.nombre,
-      description: e.descripcion,
-      date: e.fecha,
-    }));
-  },
 
   getAllMediaTypes: async () => {
     const media = await prisma.medio.findMany({

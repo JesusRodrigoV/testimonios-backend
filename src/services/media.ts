@@ -59,16 +59,28 @@ export const testimonyService = {
         contenido_texto: validatedData.content || "Sin información",
         url_medio: validatedData.url,
         duracion: validatedData.duration ?? 0,
-        latitud: validatedData.latitude
-          ? new Prisma.Decimal(validatedData.latitude)
-          : null,
-        longitud: validatedData.longitude
-          ? new Prisma.Decimal(validatedData.longitude)
-          : null,
-        id_estado: 1,
-        id_medio: mediaTypeId,
-        subido_por: userId,
-        verificado_por: userId,
+        latitud: validatedData.latitude ? new Prisma.Decimal(validatedData.latitude) : new Prisma.Decimal(0),
+        longitud: validatedData.longitude ? new Prisma.Decimal(validatedData.longitude) : new Prisma.Decimal(0),
+        estado: {
+          connect: {
+            id_estado: 1
+          }
+        },
+        medio: {
+          connect: {
+            id_medio: mediaTypeId
+          }
+        },
+        usuarios_testimonios_subido_porTousuarios: {
+          connect: {
+            id_usuario: userId
+          }
+        },
+        usuarios_testimonios_verificado_porTousuarios: {
+          connect: {
+            id_usuario: userId
+          }
+        },
         fecha_validacion: new Date(),
         created_at: new Date(),
         updated_at: new Date(),
@@ -76,6 +88,8 @@ export const testimonyService = {
       include: {
         estado: true,
         medio: true,
+        usuarios_testimonios_subido_porTousuarios: true,
+        usuarios_testimonios_verificado_porTousuarios: true
       },
     });
 

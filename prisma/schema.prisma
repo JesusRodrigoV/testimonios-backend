@@ -143,8 +143,8 @@ model testimonios {
   contenido_texto                               String
   url_medio                                     String                    @db.VarChar(255)
   fecha_validacion                              DateTime                  @db.Timestamptz(6)
-  latitud                                       Decimal?                  @db.Decimal(10, 8)
-  longitud                                      Decimal?                  @db.Decimal(10, 8)
+  latitud                                       Decimal                   @db.Decimal(10, 8)
+  longitud                                      Decimal                   @db.Decimal(10, 8)
   duracion                                      Int
   created_at                                    DateTime                  @default(now()) @db.Timestamptz(6)
   updated_at                                    DateTime                  @default(now()) @db.Timestamptz(6)

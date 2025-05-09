@@ -6,6 +6,8 @@ import testimoniosRouter from "@app/routes/testimonios";
 import categoriaRouter from "@app/routes/CategoriaRoutes"; 
 import etiquetaRouter from "@app/routes/etiqueta";
 import eventoRouter from "@app/routes/evento";
+import comentarioRouter from "@app/routes/comentario.route";
+import notificacionRouter from "@app/routes/notificacion.route";
 
 const app = express();
 
@@ -17,6 +19,8 @@ app.use("/media", testimoniosRouter);
 app.use("/categories", categoriaRouter);
 app.use("/tags", etiquetaRouter);
 app.use("/events", eventoRouter);
+app.use("/comments", comentarioRouter);
+app.use("/notifications", notificacionRouter);
 
 app.use(
   (

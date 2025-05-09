@@ -63,6 +63,7 @@ model estado {
   comentarios        comentarios[]
   solicitudes_acceso solicitudes_acceso[]
   testimonios        testimonios[]
+  notificaciones     notificaciones[]
 }
 
 model etiquetas {
@@ -103,6 +104,19 @@ model medio {
   id_medio    Int           @id(map: "medio_pk") @default(autoincrement())
   nombre      String        @db.VarChar(50)
   testimonios testimonios[]
+}
+
+model notificaciones {
+  id_notificacion    Int         @id(map: "notificaciones_pk") @default(autoincrement())
+  mensaje            String
+  fecha_creacion     DateTime    @default(now()) @db.Timestamptz(6)
+  leido              Boolean     @default(false)
+  id_testimonio      Int
+  id_estado          Int
+  id_usuario         Int
+  testimonios        testimonios @relation(fields: [id_testimonio], references: [id_testimonio], onDelete: NoAction, onUpdate: NoAction, map: "notificaciones_testimonios")
+  estado             estado      @relation(fields: [id_estado], references: [id_estado], onDelete: NoAction, onUpdate: NoAction, map: "notificaciones_estado")
+  usuarios           usuarios    @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "notificaciones_usuario")
 }
 
 model permisos {
@@ -166,6 +180,7 @@ model testimonios {
   testimonios_etiquetas                         testimonios_etiquetas[]
   testimonios_eventos                           testimonios_eventos[]
   transcripciones                               transcripciones[]
+  notificaciones                                notificaciones[]
 }
 
 model testimonios_categorias {
@@ -233,4 +248,5 @@ model usuarios {
   testimonios_testimonios_verificado_porTousuarios               testimonios[]           @relation("testimonios_verificado_porTousuarios")
   transcripciones                                                transcripciones[]
   rol                                                            rol                     @relation(fields: [id_rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "usuario_rol")
+  notificaciones                                                 notificaciones[]
 }

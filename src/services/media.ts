@@ -5,6 +5,7 @@ import {
 } from "@app/models/testimony";
 import { PrismaClient, Prisma } from "@generated/prisma";
 import { parse } from "valibot";
+import { NotificacionModel } from '@app/models/notificacion.model';
 
 // Definimos un tipo para los IDs de roles
 type RoleId = 1 | 2 | 3 | 4;
@@ -63,7 +64,7 @@ export const testimonyService = {
         longitud: validatedData.longitude ? new Prisma.Decimal(validatedData.longitude) : new Prisma.Decimal(0),
         estado: {
           connect: {
-            id_estado: 1
+            id_estado: 1 // Estado pendiente
           }
         },
         medio: {
@@ -92,6 +93,9 @@ export const testimonyService = {
         usuarios_testimonios_verificado_porTousuarios: true
       },
     });
+
+    // Crear notificaciones para administradores y curadores
+    await NotificacionModel.notificarNuevoTestimonio(testimony.id_testimonio, userId);
 
     if (validatedData.tags?.length) {
       for (const tagName of validatedData.tags) {
@@ -397,16 +401,35 @@ export const testimonyService = {
       throw new Error("No tienes permiso para validar testimonios");
     }
 
-    const testimony = await prisma.testimonios.update({
+    const testimony = await prisma.testimonios.findUnique({
+      where: { id_testimonio: testimonyId },
+      include: {
+        usuarios_testimonios_subido_porTousuarios: true
+      }
+    });
+
+    if (!testimony) {
+      throw new Error("Testimonio no encontrado");
+    }
+
+    const updatedTestimony = await prisma.testimonios.update({
       where: { id_testimonio: testimonyId },
       data: {
-        id_estado: approve ? 2 : 3,
+        id_estado: approve ? 2 : 3, // 2 = Aprobado, 3 = Rechazado
         verificado_por: userId,
         fecha_validacion: new Date(),
         updated_at: new Date(),
       },
       include: { estado: true },
     });
+
+    // Crear notificación para el usuario que subió el testimonio
+    await NotificacionModel.notificarCambioEstadoTestimonio(
+      testimonyId,
+      testimony.subido_por,
+      updatedTestimony.id_estado,
+      testimony.titulo
+    );
 
     await prisma.historial_testimonios.create({
       data: {
@@ -424,8 +447,8 @@ export const testimonyService = {
     });
 
     return {
-      id: testimony.id_testimonio,
-      status: testimony.estado.nombre,
+      id: updatedTestimony.id_testimonio,
+      status: updatedTestimony.estado.nombre,
     };
   },
 

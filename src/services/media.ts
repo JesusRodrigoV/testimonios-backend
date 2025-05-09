@@ -6,10 +6,8 @@ import {
 import { PrismaClient, Prisma } from "@generated/prisma";
 import { parse } from "valibot";
 
-// Definimos un tipo para los IDs de roles
 type RoleId = 1 | 2 | 3 | 4;
 
-// Definimos la estructura de los permisos para un rol
 interface RolePermission {
   canViewStatuses: string[];
   canValidate: boolean;
@@ -18,28 +16,23 @@ interface RolePermission {
 
 const prisma = new PrismaClient();
 
-// Mapa de permisos por rol
 const rolePermissions: Record<RoleId, RolePermission> = {
   1: {
-    // Administrador
     canViewStatuses: ["Pendiente", "Aprobado", "Rechazado"],
     canValidate: true,
     canDelete: true,
   },
   2: {
-    // Curador
     canViewStatuses: ["Pendiente", "Aprobado", "Rechazado"],
     canValidate: true,
     canDelete: true,
   },
   3: {
-    // Investigador
     canViewStatuses: ["Aprobado"],
     canValidate: false,
     canDelete: false,
   },
   4: {
-    // Visitante
     canViewStatuses: ["Aprobado"],
     canValidate: false,
     canDelete: false,
@@ -161,7 +154,7 @@ export const testimonyService = {
       longitude: testimony.longitud ? Number(testimony.longitud) : null,
       createdAt: testimony.created_at,
       status: testimony.estado.nombre,
-      mediaType: testimony.medio.nombre,
+      format: testimony.medio.nombre,
     };
   },
 
@@ -216,7 +209,7 @@ export const testimonyService = {
       createdAt: testimony.created_at,
       updatedAt: testimony.updated_at,
       status: testimony.estado.nombre,
-      mediaType: testimony.medio.nombre,
+      format: testimony.medio.nombre,
       author: testimony.usuarios_testimonios_subido_porTousuarios.nombre,
       categories: testimony.testimonios_categorias.map(
         (tc) => tc.categorias.nombre,
@@ -373,7 +366,7 @@ export const testimonyService = {
         longitude: t.longitud ? Number(t.longitud) : null,
         createdAt: t.created_at,
         status: t.estado.nombre,
-        mediaType: t.medio.nombre,
+        format: t.medio.nombre,
         author: t.usuarios_testimonios_subido_porTousuarios.nombre,
         categories: t.testimonios_categorias.map((tc) => tc.categorias.nombre),
         tags: t.testimonios_etiquetas.map((te) => te.etiquetas.nombre),

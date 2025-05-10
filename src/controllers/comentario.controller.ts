@@ -131,4 +131,35 @@ export class ComentarioController {
       res.status(500).json({ error: 'Error al eliminar el comentario' });
     }
   }
+
+  static async validateComment(req: Request, res: Response) {
+    try {
+      const { commentId, approve } = req.body;
+      
+      if (!commentId || typeof approve !== "boolean") {
+        return res.status(400).json({ error: "Datos de validación inválidos" });
+      }
+
+      // Solo administradores y curadores pueden validar comentarios
+      if (req.user?.id_rol !== Rol.ADMIN && req.user?.id_rol !== Rol.CURADOR) {
+        return res.status(403).json({ error: "No tiene permiso para validar comentarios" });
+      }
+
+      const comentario = await ComentarioModel.findById(parseInt(commentId));
+      
+      if (!comentario) {
+        return res.status(404).json({ error: "Comentario no encontrado" });
+      }
+
+      // Actualizar el estado del comentario (2 = aprobado, 3 = rechazado)
+      const id_estado = approve ? 2 : 3;
+      const comentarioActualizado = await ComentarioModel.update(parseInt(commentId), { id_estado });
+      
+      res.json(comentarioActualizado);
+    } catch (error) {
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Error al validar el comentario" 
+      });
+    }
+  }
 }

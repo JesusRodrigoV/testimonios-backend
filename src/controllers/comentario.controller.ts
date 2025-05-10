@@ -5,14 +5,12 @@ import { Rol } from '@app/middleware/authorization';
 export class ComentarioController {
   static async getAll(req: Request, res: Response) {
     try {
-      // Si es administrador, ve todos los comentarios
-      if (req.user?.id_rol === Rol.ADMIN) {
+      if (req.user?.id_rol === Rol.ADMIN) { // solo los admins ven todos los comentarios
         const comentarios = await ComentarioModel.findAll();
         return res.json(comentarios);
       }
       
-      // Si no es administrador, solo ve los comentarios aprobados (id_estado: 2)
-      const comentarios = await ComentarioModel.findApproved();
+      const comentarios = await ComentarioModel.findApproved(); // si no es admin, solo ve los comentarios aprobados
       res.json(comentarios);
     } catch (error) {
       res.status(500).json({ error: 'Error al obtener los comentarios' });
@@ -21,8 +19,7 @@ export class ComentarioController {
 
   static async getPendingComments(req: Request, res: Response) {
     try {
-      // Solo el administrador puede ver los comentarios pendientes
-      if (req.user?.id_rol !== Rol.ADMIN) {
+      if (req.user?.id_rol !== Rol.ADMIN) { // solo el admin puede ver los comentarios pendientes
         return res.status(403).json({ error: 'No tiene permiso para ver comentarios pendientes' });
       }
 
@@ -30,6 +27,21 @@ export class ComentarioController {
       res.json(comentarios);
     } catch (error) {
       res.status(500).json({ error: 'Error al obtener los comentarios pendientes' });
+    }
+  }
+
+  static async getByTestimonioId(req: Request, res: Response) {
+    try {
+      const { id_testimonio } = req.params;
+      
+      if (!id_testimonio) {
+        return res.status(400).json({ error: 'ID de testimonio requerido' });
+      }
+
+      const comentarios = await ComentarioModel.findByTestimonioId(parseInt(id_testimonio));
+      res.json(comentarios);
+    } catch (error) {
+      res.status(500).json({ error: 'Error al obtener los comentarios del testimonio' });
     }
   }
 
@@ -45,8 +57,7 @@ export class ComentarioController {
         return res.status(404).json({ error: 'Comentario no encontrado' });
       }
 
-      // Si no es administrador y el comentario no está aprobado (id_estado: 2), no puede verlo
-      if (req.user?.id_rol !== Rol.ADMIN && comentario.id_estado !== 2) {
+      if (req.user?.id_rol !== Rol.ADMIN && comentario.id_estado !== 2) { // comentarios no aprobados no se ven
         return res.status(403).json({ error: 'No tiene permiso para ver este comentario' });
       }
 
@@ -60,8 +71,7 @@ export class ComentarioController {
     try {
       const { contenido, id_testimonio } = req.body;
       
-      // Por defecto, los comentarios nuevos tienen estado pendiente (id_estado: 1)
-      const comentario = await ComentarioModel.create({ 
+      const comentario = await ComentarioModel.create({ // los comentarios nuevos tienen estado pendiente
         contenido, 
         id_estado: 1, // Estado pendiente
         fecha_creacion: new Date(),
@@ -94,8 +104,7 @@ export class ComentarioController {
         return res.json(comentarioActualizado);
       }
 
-      // Si no es administrador, solo puede actualizar el contenido de sus propios comentarios
-      if (comentario.creado_por_id_usuario !== req.user!.id_usuario) {
+      if (comentario.creado_por_id_usuario !== req.user!.id_usuario) { // si no es admin, solo el creador del comentario puede modificarlo
         return res.status(403).json({ error: 'No tiene permiso para modificar este comentario' });
       }
 
@@ -120,8 +129,7 @@ export class ComentarioController {
         return res.status(404).json({ error: 'Comentario no encontrado' });
       }
 
-      // Solo el administrador o el creador del comentario pueden eliminarlo
-      if (req.user?.id_rol !== Rol.ADMIN && comentario.creado_por_id_usuario !== req.user!.id_usuario) {
+      if (req.user?.id_rol !== Rol.ADMIN && comentario.creado_por_id_usuario !== req.user!.id_usuario) { // solo el admin o el creador del comentario pueden eliminarlo
         return res.status(403).json({ error: 'No tiene permiso para eliminar este comentario' });
       }
 

@@ -11,11 +11,25 @@ export class ComentarioController {
         return res.json(comentarios);
       }
       
-      // Si no es administrador, solo ve los comentarios aprobados (id_estado = 1)
+      // Si no es administrador, solo ve los comentarios aprobados (id_estado: 2)
       const comentarios = await ComentarioModel.findApproved();
       res.json(comentarios);
     } catch (error) {
       res.status(500).json({ error: 'Error al obtener los comentarios' });
+    }
+  }
+
+  static async getPendingComments(req: Request, res: Response) {
+    try {
+      // Solo el administrador puede ver los comentarios pendientes
+      if (req.user?.id_rol !== Rol.ADMIN) {
+        return res.status(403).json({ error: 'No tiene permiso para ver comentarios pendientes' });
+      }
+
+      const comentarios = await ComentarioModel.findPending();
+      res.json(comentarios);
+    } catch (error) {
+      res.status(500).json({ error: 'Error al obtener los comentarios pendientes' });
     }
   }
 
@@ -31,8 +45,8 @@ export class ComentarioController {
         return res.status(404).json({ error: 'Comentario no encontrado' });
       }
 
-      // Si no es administrador y el comentario no está aprobado, no puede verlo
-      if (req.user?.id_rol !== Rol.ADMIN && comentario.id_estado !== 1) {
+      // Si no es administrador y el comentario no está aprobado (id_estado: 2), no puede verlo
+      if (req.user?.id_rol !== Rol.ADMIN && comentario.id_estado !== 2) {
         return res.status(403).json({ error: 'No tiene permiso para ver este comentario' });
       }
 
@@ -46,10 +60,10 @@ export class ComentarioController {
     try {
       const { contenido, id_testimonio } = req.body;
       
-      // Por defecto, los comentarios nuevos tienen estado pendiente (id_estado = 2)
+      // Por defecto, los comentarios nuevos tienen estado pendiente (id_estado: 1)
       const comentario = await ComentarioModel.create({ 
         contenido, 
-        id_estado: 2, // Estado pendiente
+        id_estado: 1, // Estado pendiente
         fecha_creacion: new Date(),
         creado_por_id_usuario: req.user!.id_usuario,
         id_testimonio 

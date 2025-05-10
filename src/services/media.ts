@@ -232,8 +232,8 @@ export const testimonyService = {
       category?: string;
       tag?: string;
       eventId?: number;
-      page?: number;
-      limit?: number;
+      page?: number; // numero de pagina
+      limit?: number; // numero de testimonios por pagina
       highlighted?: boolean;
       status?: string;
     },
@@ -312,7 +312,8 @@ export const testimonyService = {
         ),
       };
     }
-
+    
+    // implementacion de paginación
     const page = params.page ?? 1;
     const limit = params.highlighted ? 3 : (params.limit ?? 5);
     const skip = (page - 1) * limit;

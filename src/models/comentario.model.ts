@@ -7,13 +7,43 @@ export class ComentarioModel {
   
     static async findApproved() {
       return prisma.comentarios.findMany({
-        where: { id_estado: 1 } // 1 = aprobado
+        where: { id_estado: 2 }, // 2 = aprobado
+        include: {
+          usuarios: {
+            select: {
+              nombre: true,
+              profile_image: true
+            }
+          }
+        }
+      });
+    }
+
+    static async findPending() {
+      return prisma.comentarios.findMany({
+        where: { id_estado: 1 }, // 1 = pendiente
+        include: {
+          usuarios: {
+            select: {
+              nombre: true,
+              profile_image: true
+            }
+          }
+        }
       });
     }
   
     static async findById(id: number) {
       return prisma.comentarios.findUnique({
-        where: { id_comentario: id }
+        where: { id_comentario: id },
+        include: {
+          usuarios: {
+            select: {
+              nombre: true,
+              profile_image: true
+            }
+          }
+        }
       });
     }
   
@@ -25,7 +55,15 @@ export class ComentarioModel {
       id_testimonio: number 
     }) {
       return prisma.comentarios.create({
-        data
+        data,
+        include: {
+          usuarios: {
+            select: {
+              nombre: true,
+              profile_image: true
+            }
+          }
+        }
       });
     }
   
@@ -35,7 +73,15 @@ export class ComentarioModel {
     }) {
       return prisma.comentarios.update({
         where: { id_comentario: id },
-        data
+        data,
+        include: {
+          usuarios: {
+            select: {
+              nombre: true,
+              profile_image: true
+            }
+          }
+        }
       });
     }
   

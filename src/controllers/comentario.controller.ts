@@ -88,7 +88,6 @@ export class ComentarioController {
         return res.status(404).json({ error: 'Comentario no encontrado' });
       }
 
-      // Solo el administrador puede cambiar el estado del comentario
       if (req.user?.id_rol === Rol.ADMIN) {
         const { contenido, id_estado } = req.body;
         const comentarioActualizado = await ComentarioModel.update(id, { contenido, id_estado });

@@ -9,6 +9,7 @@ const router = express.Router();
 router.use(authenticateToken);
 
 router.get('/', ComentarioController.getAll as RequestHandler);
+router.get('/pending', ComentarioController.getPendingComments as RequestHandler);
 router.get('/:id', ComentarioController.getById as RequestHandler);
 router.post('/', ComentarioController.create as RequestHandler);
 router.put('/:id', ComentarioController.update as RequestHandler);

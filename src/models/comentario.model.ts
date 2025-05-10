@@ -32,6 +32,26 @@ export class ComentarioModel {
         }
       });
     }
+
+    static async findByTestimonioId(id_testimonio: number) {
+      return prisma.comentarios.findMany({
+        where: { 
+          id_testimonio,
+          id_estado: 2 // solo comentarios aprobados
+        },
+        include: {
+          usuarios: {
+            select: {
+              nombre: true,
+              profile_image: true
+            }
+          }
+        },
+        orderBy: {
+          fecha_creacion: 'desc'
+        }
+      });
+    }
   
     static async findById(id: number) {
       return prisma.comentarios.findUnique({

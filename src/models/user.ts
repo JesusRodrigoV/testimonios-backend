@@ -79,20 +79,45 @@ export const createUser = async ({
 }: UserInput & { id_rol?: number }): Promise<User> => {
   const hashedPassword = await hash(password, 10);
 
-  return prisma.usuarios.create({
-    data: {
-      email,
-      password: hashedPassword,
-      nombre,
-      biografia: biografia || "",
-      id_rol,
-      two_factor_secret: "",
-      last_login: new Date(),
-      two_factor_enabled: false,
-    },
-    include: {
-      rol: true,
-    },
+  // Crear el usuario y sus colecciones por defecto en una transacción
+  return prisma.$transaction(async (tx) => {
+    const user = await tx.usuarios.create({
+      data: {
+        email,
+        password: hashedPassword,
+        nombre,
+        biografia: biografia || "",
+        id_rol,
+        two_factor_secret: "",
+        last_login: new Date(),
+        two_factor_enabled: false,
+      },
+      include: {
+        rol: true,
+      },
+    });
+
+    // Crear colección de Favoritos
+    await tx.colecciones.create({
+      data: {
+        titulo: "Favoritos",
+        descripcion: "Testimonios favoritos",
+        fecha_creacion: new Date(),
+        id_usuario: user.id_usuario,
+      },
+    });
+
+    // Crear colección de Guardados
+    await tx.colecciones.create({
+      data: {
+        titulo: "Guardados",
+        descripcion: "Testimonios guardados",
+        fecha_creacion: new Date(),
+        id_usuario: user.id_usuario,
+      },
+    });
+
+    return user;
   });
 };
 

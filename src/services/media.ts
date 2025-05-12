@@ -5,7 +5,7 @@ import {
 } from "@app/models/testimony";
 import { PrismaClient, Prisma } from "@generated/prisma";
 import { parse } from "valibot";
-import { NotificacionModel } from '@app/models/notificacion.model';
+import { NotificacionModel } from "@app/models/notificacion.model";
 
 type RoleId = 1 | 2 | 3 | 4;
 
@@ -44,7 +44,7 @@ export const testimonyService = {
   createTestimony: async (data: TestimonyInput, userId: number) => {
     const validatedData = parse(inputTestimonySchema, data);
 
-    const mediaTypeId = validatedData.format === "video" ? 1 : 2;
+    const mediaTypeId = validatedData.format === "Video" ? 1 : 2;
 
     const testimony = await prisma.testimonios.create({
       data: {
@@ -53,27 +53,31 @@ export const testimonyService = {
         contenido_texto: validatedData.content || "Sin información",
         url_medio: validatedData.url,
         duracion: validatedData.duration ?? 0,
-        latitud: validatedData.latitude ? new Prisma.Decimal(validatedData.latitude) : new Prisma.Decimal(0),
-        longitud: validatedData.longitude ? new Prisma.Decimal(validatedData.longitude) : new Prisma.Decimal(0),
+        latitud: validatedData.latitude
+          ? new Prisma.Decimal(validatedData.latitude)
+          : new Prisma.Decimal(0),
+        longitud: validatedData.longitude
+          ? new Prisma.Decimal(validatedData.longitude)
+          : new Prisma.Decimal(0),
         estado: {
           connect: {
-            id_estado: 1 // Estado pendiente
-          }
+            id_estado: 1, // Estado pendiente
+          },
         },
         medio: {
           connect: {
-            id_medio: mediaTypeId
-          }
+            id_medio: mediaTypeId,
+          },
         },
         usuarios_testimonios_subido_porTousuarios: {
           connect: {
-            id_usuario: userId
-          }
+            id_usuario: userId,
+          },
         },
         usuarios_testimonios_verificado_porTousuarios: {
           connect: {
-            id_usuario: userId
-          }
+            id_usuario: userId,
+          },
         },
         fecha_validacion: new Date(),
         created_at: new Date(),
@@ -83,12 +87,15 @@ export const testimonyService = {
         estado: true,
         medio: true,
         usuarios_testimonios_subido_porTousuarios: true,
-        usuarios_testimonios_verificado_porTousuarios: true
+        usuarios_testimonios_verificado_porTousuarios: true,
       },
     });
 
     // Crear notificaciones para administradores y curadores
-    await NotificacionModel.notificarNuevoTestimonio(testimony.id_testimonio, userId);
+    await NotificacionModel.notificarNuevoTestimonio(
+      testimony.id_testimonio,
+      userId,
+    );
 
     if (validatedData.tags?.length) {
       for (const tagName of validatedData.tags) {
@@ -312,7 +319,7 @@ export const testimonyService = {
         ),
       };
     }
-    
+
     // implementacion de paginación
     const page = params.page ?? 1;
     const limit = params.highlighted ? 3 : (params.limit ?? 5);
@@ -398,8 +405,8 @@ export const testimonyService = {
     const testimony = await prisma.testimonios.findUnique({
       where: { id_testimonio: testimonyId },
       include: {
-        usuarios_testimonios_subido_porTousuarios: true
-      }
+        usuarios_testimonios_subido_porTousuarios: true,
+      },
     });
 
     if (!testimony) {
@@ -422,7 +429,7 @@ export const testimonyService = {
       testimonyId,
       testimony.subido_por,
       updatedTestimony.id_estado,
-      testimony.titulo
+      testimony.titulo,
     );
 
     await prisma.historial_testimonios.create({
@@ -545,7 +552,6 @@ export const testimonyService = {
       description: c.descripcion,
     }));
   },
-
 
   getAllMediaTypes: async () => {
     const media = await prisma.medio.findMany({

@@ -348,8 +348,10 @@ export const testimonyService = {
       testimonios_eventos: {
         include: { eventos_historicos: { select: { nombre: true } } },
       },
+
       usuarios_testimonios_subido_porTousuarios: { select: { nombre: true } },
     };
+
 
     const [testimonies, total] = await Promise.all([
       prisma.testimonios.findMany({

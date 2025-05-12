@@ -120,7 +120,27 @@ export class ColeccionController {
                 return res.status(403).json({ error: 'No tiene permiso para modificar esta colección' });
             }
 
-            // Agregar el testimonio a la colección
+            const existingEntry = await prisma.colecciones_testimonios.findUnique({
+                where: {
+                    id_coleccion_id_testimonio: {
+                        id_coleccion,
+                        id_testimonio,
+                    },
+                },
+            });
+
+            if (existingEntry) {
+                await prisma.colecciones_testimonios.delete({
+                    where: {
+                        id_coleccion_id_testimonio: {
+                            id_coleccion,
+                            id_testimonio,
+                        },
+                    },
+                });
+                return res.json({ message: 'Testimonio eliminado de la colección' });
+            }
+
             const coleccionTestimonio = await prisma.colecciones_testimonios.create({
                 data: {
                     id_coleccion,
@@ -249,6 +269,41 @@ export class ColeccionController {
             });
         } catch (error) {
             res.status(500).json({ error: 'Error al obtener los testimonios de la colección' });
+        }
+    }
+
+    static async getFavoriteTestimonyIds(req: Request, res: Response) {
+        try {
+            const userId = req.user!.id_usuario;
+
+            // Buscar la colección "Favoritos" del usuario
+            const favoritosColeccion = await prisma.colecciones.findFirst({
+                where: {
+                    id_usuario: userId,
+                    titulo: 'Favoritos',
+                },
+                select: { id_coleccion: true },
+            });
+
+            if (!favoritosColeccion) {
+                return res.status(404).json({ error: 'Colección Favoritos no encontrada' });
+            }
+
+            // Obtener los IDs de los testimonios en la colección "Favoritos"
+            const favoritos = await prisma.colecciones_testimonios.findMany({
+                where: {
+                    id_coleccion: favoritosColeccion.id_coleccion,
+                },
+                select: { id_testimonio: true },
+            });
+
+            const favoriteIds = favoritos.map((fav) => fav.id_testimonio);
+            console.log('Favoritos del usuario:', favoriteIds);
+
+            res.json(favoriteIds);
+        } catch (error) {
+            console.error('Error al obtener IDs de favoritos:', error);
+            res.status(500).json({ error: 'Error al obtener los IDs de testimonios favoritos' });
         }
     }
 }

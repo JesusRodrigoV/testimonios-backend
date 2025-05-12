@@ -85,6 +85,8 @@ export const searchTestimonies = async (req: Request, res: Response) => {
       req.user?.id_usuario || 0,
       req.user?.id_rol || 4,
     );
+
+    
     res.json(result);
   } catch (error) {
     res.status(400).json({

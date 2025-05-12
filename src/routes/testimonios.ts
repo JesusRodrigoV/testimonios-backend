@@ -33,7 +33,7 @@ router.delete(
 router.get("/:id", authenticateToken, getTestimony);
 router.get("/", authenticateToken, searchTestimonies);
 router.get("/:id/versions", authenticateToken, getTestimonyVersions);
-router.get("/map/data", authenticateToken, getTestimonyMap);
+router.get("/map/data", getTestimonyMap);
 router.get("/categories", getAllCategories);
 router.get("/media-types", authenticateToken, getAllMediaTypes);
 router.get("/statuses", authenticateToken, getAllStatuses);

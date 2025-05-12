@@ -25,7 +25,7 @@ export class ColeccionController {
             }
             const id = parseInt(req.params.id);
             const coleccion = await ColeccionModel.findById(id);
-            
+
             if (!coleccion) {
                 return res.status(404).json({ error: 'Coleccion no encontrada' });
             }
@@ -43,14 +43,14 @@ export class ColeccionController {
     static async create(req: Request, res: Response) {
         try {
             const { titulo, descripcion, fecha_creacion, id_usuario } = req.body;
-            
-            const coleccion = await ColeccionModel.create({ 
-                titulo, 
+
+            const coleccion = await ColeccionModel.create({
+                titulo,
                 descripcion,
                 fecha_creacion: new Date(),
                 id_usuario: req.user!.id_usuario,
             });
-            
+
             res.status(201).json(coleccion);
         } catch (error) {
             res.status(500).json({ error: 'Error al crear la coleccion' });
@@ -138,7 +138,7 @@ export class ColeccionController {
     static async removeTestimonio(req: Request, res: Response) {
         try {
             const { id_coleccion, id_testimonio } = req.params;
-            
+
             if (!id_coleccion || !id_testimonio) {
                 return res.status(400).json({ error: 'IDs no proporcionados' });
             }
@@ -171,7 +171,7 @@ export class ColeccionController {
     static async getTestimonios(req: Request, res: Response) {
         try {
             const { id } = req.params;
-            
+
             if (!id) {
                 return res.status(400).json({ error: 'ID no proporcionado' });
             }
@@ -191,11 +191,62 @@ export class ColeccionController {
                     id_coleccion: parseInt(id)
                 },
                 include: {
-                    testimonios: true
+                    testimonios: {
+                        include: {
+                            estado: {
+                                select: { nombre: true }
+                            },
+                            medio: {
+                                select: { nombre: true }
+                            },
+                            usuarios_testimonios_subido_porTousuarios: {
+                                select: { nombre: true }
+                            },
+                            testimonios_categorias: {
+                                include: {
+                                    categorias: {
+                                        select: { nombre: true }
+                                    }
+                                }
+                            },
+                            testimonios_etiquetas: {
+                                include: {
+                                    etiquetas: {
+                                        select: { nombre: true }
+                                    }
+                                }
+                            },
+                            testimonios_eventos: {
+                                include: {
+                                    eventos_historicos: {
+                                        select: { nombre: true }
+                                    }
+                                }
+                            },
+                        }
+                    }
                 }
             });
 
-            res.json(testimonios);
+            res.json({
+                data: testimonios.map((t) => ({
+                    id: t.testimonios.id_testimonio,
+                    title: t.testimonios.titulo,
+                    description: t.testimonios.descripcion,
+                    content: t.testimonios.contenido_texto,
+                    url: t.testimonios.url_medio,
+                    duration: t.testimonios.duracion,
+                    latitude: t.testimonios.latitud ? Number(t.testimonios.latitud) : null,
+                    longitude: t.testimonios.longitud ? Number(t.testimonios.longitud) : null,
+                    createdAt: t.testimonios.created_at,
+                    status: t.testimonios.estado.nombre,
+                    format: t.testimonios.medio.nombre,
+                    author: t.testimonios.usuarios_testimonios_subido_porTousuarios.nombre,
+                    categories: t.testimonios.testimonios_categorias.map((tc) => tc.categorias.nombre),
+                    tags: t.testimonios.testimonios_etiquetas.map((te) => te.etiquetas.nombre),
+                    event: t.testimonios.testimonios_eventos[0]?.eventos_historicos?.nombre,
+                })),
+            });
         } catch (error) {
             res.status(500).json({ error: 'Error al obtener los testimonios de la colección' });
         }

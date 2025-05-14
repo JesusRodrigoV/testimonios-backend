@@ -9,6 +9,7 @@ import eventoRouter from "@app/routes/evento";
 import comentarioRouter from "@app/routes/comentario.route";
 import notificacionRouter from "@app/routes/notificacion.route";
 import coleccionRouter from "@app/routes/coleccion.route";
+import transcripcionRouter from "@app/routes/transcripcion.route";
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use("/events", eventoRouter);
 app.use("/comments", comentarioRouter);
 app.use("/notifications", notificacionRouter);
 app.use("/collections", coleccionRouter);
+app.use("/transcription", transcripcionRouter);
 
 app.use(
   (

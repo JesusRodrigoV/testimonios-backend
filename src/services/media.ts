@@ -44,7 +44,7 @@ export const testimonyService = {
   createTestimony: async (data: TestimonyInput, userId: number) => {
     const validatedData = parse(inputTestimonySchema, data);
 
-    const mediaTypeId = validatedData.format === "Video" ? 1 : 2;
+    const mediaTypeId = validatedData.format === "Audio" ? 1 : 2;
 
     const testimony = await prisma.testimonios.create({
       data: {
@@ -228,6 +228,16 @@ export const testimonyService = {
       tags: testimony.testimonios_etiquetas.map((te) => te.etiquetas.nombre),
       event: testimony.testimonios_eventos[0]?.eventos_historicos?.nombre,
     };
+  },
+
+  getTestimonyCount: async() => {
+    const count = await prisma.testimonios.count({
+      where: {
+        id_estado: 2,
+      },
+    });
+
+    return count;
   },
 
   searchTestimonies: async (

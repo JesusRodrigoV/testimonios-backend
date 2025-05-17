@@ -63,4 +63,4 @@ authRouter.post(
 );
 authRouter.post("/verify-2fa", allow2FAVerification, verify2FA);
 authRouter.post("/logout", authenticateToken, logout);
-authRouter.post("/refresh", refresh);
+authRouter.post("/refresh", authenticateToken,refresh);

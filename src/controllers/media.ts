@@ -48,6 +48,15 @@ export const getTestimony = async (req: Request, res: Response) => {
   }
 };
 
+export const getTestimonyCount = async (req: Request, res: Response) => {
+  try {
+    const count = await testimonyService.getTestimonyCount();
+    res.json(count);
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : "Error al obtener el conteo de testimonios" });
+  }
+}
+
 export const searchTestimonies = async (req: Request, res: Response) => {
   try {
     const params: {
@@ -86,7 +95,7 @@ export const searchTestimonies = async (req: Request, res: Response) => {
       req.user?.id_rol || 4,
     );
 
-    
+
     res.json(result);
   } catch (error) {
     res.status(400).json({

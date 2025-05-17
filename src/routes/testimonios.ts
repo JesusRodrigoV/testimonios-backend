@@ -10,6 +10,7 @@ import {
   getAllCategories,
   getAllMediaTypes,
   getAllStatuses,
+  getTestimonyCount,
 } from "@app/controllers/media";
 import { authenticateToken } from "@app/middleware/authentication";
 import { authorizeRoles } from "@app/middleware/authorization";
@@ -30,6 +31,7 @@ router.delete(
   authorizeRoles(Rol.ADMIN, Rol.CURATOR),
   deleteTestimony,
 );
+router.get("/count", getTestimonyCount);
 router.get("/:id", authenticateToken, getTestimony);
 router.get("/", authenticateToken, searchTestimonies);
 router.get("/:id/versions", authenticateToken, getTestimonyVersions);

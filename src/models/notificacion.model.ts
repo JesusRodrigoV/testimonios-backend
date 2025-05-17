@@ -39,6 +39,30 @@ export class NotificacionModel {
     });
   }
 
+  static async findUnreadByUsuario(id_usuario: number) {
+    return prisma.notificaciones.findMany({
+      where: { 
+        id_usuario,
+        leido: false 
+      },
+      include: {
+        testimonios: {
+          select: {
+            titulo: true
+          }
+        },
+        estado: {
+          select: {
+            nombre: true
+          }
+        }
+      },
+      orderBy: {
+        fecha_creacion: 'desc'
+      }
+    });
+  }
+
   static async findById(id: number) {
     return prisma.notificaciones.findUnique({
       where: { id_notificacion: id },

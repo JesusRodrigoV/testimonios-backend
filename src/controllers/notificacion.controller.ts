@@ -13,6 +13,16 @@ export class NotificacionController {
     }
   }
 
+  static async getUnread(req: Request, res: Response) {
+    try {
+      // Los usuarios solo ven sus propias notificaciones sin leer
+      const notificaciones = await NotificacionModel.findUnreadByUsuario(req.user!.id_usuario);
+      res.json(notificaciones);
+    } catch (error) {
+      res.status(500).json({ error: 'Error al obtener las notificaciones sin leer' });
+    }
+  }
+
   static async getById(req: Request, res: Response) {
     try {
       if (!req.params.id) {

@@ -9,6 +9,7 @@ const router = express.Router();
 router.use(authenticateToken);
 
 router.get('/', NotificacionController.getAll as RequestHandler);
+router.get('/unread', NotificacionController.getUnread as RequestHandler);
 router.get('/:id', NotificacionController.getById as RequestHandler);
 router.put('/:id/leer', NotificacionController.marcarComoLeido as RequestHandler);
 router.put('/:id/estado', NotificacionController.cambiarEstado as RequestHandler);

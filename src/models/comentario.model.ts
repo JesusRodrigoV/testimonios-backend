@@ -3,7 +3,16 @@ import { NotificacionModel } from "./notificacion.model";
 
 export class ComentarioModel {
     static async findAll() {
-      return prisma.comentarios.findMany();
+      return prisma.comentarios.findMany({
+        include: {
+          usuarios: {
+            select: {
+              nombre: true,
+              profile_image: true
+            }
+          }
+        }
+      });
     }
   
     static async findApproved() {

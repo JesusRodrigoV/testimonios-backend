@@ -528,6 +528,7 @@ export const verify2FA = async (req: Request, res: Response): Promise<void> => {
     });
   }
 };
+
 export const logout = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id_usuario;
@@ -556,17 +557,17 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    const decoded = verify(refreshToken, config.jwtSecret) as { id: number };
+    const decoded = verify(refreshToken, config.jwtSecret) as { id_usuario: number };
     const user = await findUserByRefreshToken(refreshToken);
 
-    if (!user || user.id_usuario !== decoded.id) {
+    if (!user || user.id_usuario !== decoded.id_usuario) {
       res.status(403).json({ message: "Token inválido" });
       return;
     }
 
     const newAccessToken = sign(
       {
-        id: user.id_usuario,
+        id_usuario: user.id_usuario,
         email: user.email,
         role: user.id_rol,
       },
@@ -574,7 +575,19 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
       { expiresIn: "15m" },
     );
 
-    res.json({ accessToken: newAccessToken });
+    // Opcional: Generar un nuevo refreshToken
+    const newRefreshToken = sign(
+      { id_usuario: user.id_usuario },
+      config.jwtSecret,
+      { expiresIn: "7d" },
+    );
+
+    await updateRefreshToken(user.id_usuario, newRefreshToken);
+
+    res.json({
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    });
   } catch (error) {
     res.status(403).json({
       message: "Token inválido o expirado",

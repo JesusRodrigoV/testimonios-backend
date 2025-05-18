@@ -4,6 +4,7 @@ import { Rol } from "@app/models";
 import { authorizeRoles } from "@app/middleware/authorization";
 import {
   allow2FAVerification,
+  authenticateRefreshToken,
   authenticateToken,
 } from "@app/middleware/authentication";
 import { logActivity } from "@app/middleware/activityLog";
@@ -63,4 +64,4 @@ authRouter.post(
 );
 authRouter.post("/verify-2fa", allow2FAVerification, verify2FA);
 authRouter.post("/logout", authenticateToken, logout);
-authRouter.post("/refresh", authenticateToken,refresh);
+authRouter.post("/refresh", authenticateRefreshToken, refresh);

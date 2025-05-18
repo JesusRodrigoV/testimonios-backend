@@ -37,6 +37,7 @@ export const allow2FAVerification = (
     res.status(403).json({ message: "Token inválido o expirado" });
   }
 };
+
 export const authenticateToken = async (
   req: Request,
   res: Response,
@@ -82,6 +83,37 @@ export const authenticateToken = async (
 
     if (!user) {
       res.status(403).json({ message: "Usuario no encontrado" });
+      return;
+    }
+
+    req.user = decoded;
+    next();
+  } catch (_error) {
+    res.status(403).json({ message: "Token inválido o expirado" });
+  }
+};
+
+export const authenticateRefreshToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    res.status(401).json({ message: "Refresh token requerido" });
+    return;
+  }
+
+  try {
+    const decoded = verify(refreshToken, config.jwtSecret) as CustomJwtPayload;
+    const user = await prisma.usuarios.findUnique({
+      where: { id_usuario: decoded.id_usuario },
+      select: { refresh_token: true },
+    });
+
+    if (!user || user.refresh_token !== refreshToken) {
+      res.status(403).json({ message: "Token inválido" });
       return;
     }
 

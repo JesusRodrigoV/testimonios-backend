@@ -1,4 +1,5 @@
 import prisma from "src/lib/prisma";
+import { NotificacionModel } from "./notificacion.model";
 
 export class ComentarioModel {
     static async findAll() {
@@ -74,7 +75,7 @@ export class ComentarioModel {
       creado_por_id_usuario: number; 
       id_testimonio: number 
     }) {
-      return prisma.comentarios.create({
+      const comentario = await prisma.comentarios.create({
         data,
         include: {
           usuarios: {
@@ -82,16 +83,29 @@ export class ComentarioModel {
               nombre: true,
               profile_image: true
             }
+          },
+          testimonios: {
+            select: {
+              titulo: true
+            }
           }
         }
       });
+
+      await NotificacionModel.notificarNuevoComentario(
+        comentario.id_testimonio,
+        comentario.creado_por_id_usuario,
+        comentario.testimonios.titulo
+      );
+
+      return comentario;
     }
   
     static async update(id: number, data: { 
       contenido?: string;
       id_estado?: number;
     }) {
-      return prisma.comentarios.update({
+      const comentario = await prisma.comentarios.update({
         where: { id_comentario: id },
         data,
         include: {
@@ -100,9 +114,26 @@ export class ComentarioModel {
               nombre: true,
               profile_image: true
             }
+          },
+          testimonios: {
+            select: {
+              titulo: true
+            }
           }
         }
       });
+
+      // Si se cambió el estado, notificar al usuario
+      if (data.id_estado) {
+        await NotificacionModel.notificarCambioEstadoComentario(
+          comentario.id_testimonio,
+          comentario.creado_por_id_usuario,
+          data.id_estado,
+          comentario.testimonios.titulo
+        );
+      }
+
+      return comentario;
     }
   
     static async delete(id: number) {

@@ -14,5 +14,7 @@ router.get('/:id', ComentarioController.getById as RequestHandler);
 router.post('/', ComentarioController.create as RequestHandler);
 router.put('/:id', ComentarioController.update as RequestHandler);
 router.delete('/:id', ComentarioController.delete as RequestHandler);
+router.post('/:id/like', ComentarioController.likeComment as RequestHandler);
+router.delete('/:id/like', ComentarioController.unlikeComment as RequestHandler);
 
 export default router;

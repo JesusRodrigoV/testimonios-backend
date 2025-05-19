@@ -9,7 +9,7 @@ export class ComentarioController {
         const comentarios = await ComentarioModel.findAll();
         return res.json(comentarios);
       }
-      
+
       const comentarios = await ComentarioModel.findApproved(); // si no es admin, solo ve los comentarios aprobados
       res.json(comentarios);
     } catch (error) {
@@ -33,7 +33,7 @@ export class ComentarioController {
   static async getByTestimonioId(req: Request, res: Response) {
     try {
       const { id_testimonio } = req.params;
-      
+
       if (!id_testimonio) {
         return res.status(400).json({ error: 'ID de testimonio requerido' });
       }
@@ -52,7 +52,7 @@ export class ComentarioController {
       }
       const id = parseInt(req.params.id);
       const comentario = await ComentarioModel.findById(id);
-      
+
       if (!comentario) {
         return res.status(404).json({ error: 'Comentario no encontrado' });
       }
@@ -69,16 +69,21 @@ export class ComentarioController {
 
   static async create(req: Request, res: Response) {
     try {
-      const { contenido, id_testimonio } = req.body;
-      
+      const { contenido, id_testimonio, parent_id } = req.body;
+
+      if (!contenido || !id_testimonio) {
+        return res.status(400).json({ error: 'Contenido e ID de testimonio son requeridos' });
+      }
+
       const comentario = await ComentarioModel.create({ // los comentarios nuevos tienen estado pendiente
-        contenido, 
+        contenido,
         id_estado: 1, // Estado pendiente
         fecha_creacion: new Date(),
         creado_por_id_usuario: req.user!.id_usuario,
-        id_testimonio 
+        id_testimonio,
+        parent_id: parent_id ? parseInt(parent_id) : undefined,
       });
-      
+
       res.status(201).json(comentario);
     } catch (error) {
       res.status(500).json({ error: 'Error al crear el comentario' });
@@ -137,6 +142,42 @@ export class ComentarioController {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: 'Error al eliminar el comentario' });
+    }
+  }
+
+  static async likeComment(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        return res.status(400).json({ error: 'ID no proporcionado' });
+      }
+      const id_comentario = parseInt(id);
+      const comentario = await ComentarioModel.findById(id_comentario);
+      if (!comentario || comentario.id_estado !== 2) {
+        return res.status(404).json({ error: 'Comentario no encontrado o no aprobado' });
+      }
+      await ComentarioModel.likeComment(id_comentario, req.user!.id_usuario);
+      res.status(201).json({ message: 'Comentario marcado como me gusta' });
+    } catch (error) {
+      res.status(500).json({ error: 'Error al dar me gusta al comentario' });
+    }
+  }
+
+  static async unlikeComment(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        return res.status(400).json({ error: 'ID no proporcionado' });
+      }
+      const id_comentario = parseInt(id);
+      const comentario = await ComentarioModel.findById(id_comentario);
+      if (!comentario || comentario.id_estado !== 2) {
+        return res.status(404).json({ error: 'Comentario no encontrado o no aprobado' });
+      }
+      await ComentarioModel.unlikeComment(id_comentario, req.user!.id_usuario);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: 'Error al quitar me gusta al comentario' });
     }
   }
 }

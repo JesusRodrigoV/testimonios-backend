@@ -18,5 +18,6 @@ router.post('/testimonios', ColeccionController.addTestimonio as RequestHandler)
 router.delete('/:id_coleccion/testimonios/:id_testimonio', ColeccionController.removeTestimonio as RequestHandler);
 router.get('/:id/testimonios', ColeccionController.getTestimonios as RequestHandler);
 router.get('/favorites/ids', ColeccionController.getFavoriteTestimonyIds as RequestHandler);
+router.get('/favorite-count/:id', ColeccionController.getFavoriteCount as RequestHandler);
 
 export default router;

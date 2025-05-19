@@ -208,6 +208,8 @@ export const testimonyService = {
       throw new Error("No autorizado para ver este testimonio");
     }
 
+
+
     return {
       id: testimony.id_testimonio,
       title: testimony.titulo,
@@ -230,7 +232,7 @@ export const testimonyService = {
     };
   },
 
-  getTestimonyCount: async() => {
+  getTestimonyCount: async () => {
     const count = await prisma.testimonios.count({
       where: {
         id_estado: 2,
@@ -249,8 +251,8 @@ export const testimonyService = {
       category?: string;
       tag?: string;
       eventId?: number;
-      page?: number; // numero de pagina
-      limit?: number; // numero de testimonios por pagina
+      page?: number;
+      limit?: number;
       highlighted?: boolean;
       status?: string;
     },
@@ -258,11 +260,11 @@ export const testimonyService = {
     userRole: number,
   ) => {
     console.log(
-      "Parámetros de búsqueda:",
+      'Parámetros de búsqueda:',
       params,
-      "Usuario ID:",
+      'Usuario ID:',
       userId,
-      "Rol:",
+      'Rol:',
       userRole,
     );
 
@@ -272,9 +274,9 @@ export const testimonyService = {
 
     if (params.keyword) {
       where.OR = [
-        { titulo: { contains: params.keyword, mode: "insensitive" } },
-        { descripcion: { contains: params.keyword, mode: "insensitive" } },
-        { contenido_texto: { contains: params.keyword, mode: "insensitive" } },
+        { titulo: { contains: params.keyword, mode: 'insensitive' } },
+        { descripcion: { contains: params.keyword, mode: 'insensitive' } },
+        { contenido_texto: { contains: params.keyword, mode: 'insensitive' } },
       ];
     }
 
@@ -292,7 +294,7 @@ export const testimonyService = {
       where.testimonios_categorias = {
         some: {
           categorias: {
-            nombre: { contains: params.category, mode: "insensitive" },
+            nombre: { contains: params.category, mode: 'insensitive' },
           },
         },
       };
@@ -301,7 +303,7 @@ export const testimonyService = {
     if (params.tag) {
       where.testimonios_etiquetas = {
         some: {
-          etiquetas: { nombre: { contains: params.tag, mode: "insensitive" } },
+          etiquetas: { nombre: { contains: params.tag, mode: 'insensitive' } },
         },
       };
     }
@@ -318,24 +320,24 @@ export const testimonyService = {
       }[params.status];
       if (!statusId || !permissions.canViewStatuses.includes(params.status)) {
         throw new Error(
-          "No tienes permiso para ver testimonios con este estado",
+          'No tienes permiso para ver testimonios con este estado',
         );
       }
       where.id_estado = statusId;
     } else {
       where.id_estado = {
         in: permissions.canViewStatuses.map((status) =>
-          status === "Pendiente" ? 1 : status === "Aprobado" ? 2 : 3,
+          status === 'Pendiente' ? 1 : status === 'Aprobado' ? 2 : 3,
         ),
       };
     }
 
-    // implementacion de paginación
+    // Implementación de paginación
     const page = params.page ?? 1;
     const limit = params.highlighted ? 3 : (params.limit ?? 5);
     const skip = (page - 1) * limit;
 
-    console.log("Cláusula where de Prisma:", where);
+    console.log('Cláusula where de Prisma:', where);
 
     const select = {
       id_testimonio: true,
@@ -358,10 +360,8 @@ export const testimonyService = {
       testimonios_eventos: {
         include: { eventos_historicos: { select: { nombre: true } } },
       },
-
       usuarios_testimonios_subido_porTousuarios: { select: { nombre: true } },
     };
-
 
     const [testimonies, total] = await Promise.all([
       prisma.testimonios.findMany({
@@ -369,33 +369,47 @@ export const testimonyService = {
         skip,
         take: limit,
         orderBy: params.highlighted
-          ? [{ calificaciones: { _count: "desc" } }, { created_at: "desc" }]
-          : { created_at: "desc" },
+          ? [{ calificaciones: { _count: 'desc' } }, { created_at: 'desc' }]
+          : { created_at: 'desc' },
         select,
       }),
       prisma.testimonios.count({ where }),
     ]);
 
-    console.log("Testimonios encontrados:", testimonies);
+    
+    const testimoniosConFavoritos = await Promise.all(
+      testimonies.map(async (t) => {
+        const favoriteCount = await prisma.colecciones_testimonios.count({
+          where: {
+            id_testimonio: t.id_testimonio,
+            colecciones: {
+              titulo: 'Favoritos',
+            },
+          },
+        });
+        return {
+          id: t.id_testimonio,
+          title: t.titulo,
+          description: t.descripcion,
+          content: t.contenido_texto,
+          url: t.url_medio,
+          duration: t.duracion,
+          latitude: t.latitud ? Number(t.latitud) : null,
+          longitude: t.longitud ? Number(t.longitud) : null,
+          createdAt: t.created_at,
+          status: t.estado.nombre,
+          format: t.medio.nombre,
+          author: t.usuarios_testimonios_subido_porTousuarios.nombre,
+          categories: t.testimonios_categorias.map((tc) => tc.categorias.nombre),
+          tags: t.testimonios_etiquetas.map((te) => te.etiquetas.nombre),
+          event: t.testimonios_eventos[0]?.eventos_historicos?.nombre,
+          favoriteCount, 
+        };
+      }),
+    );
 
     return {
-      data: testimonies.map((t) => ({
-        id: t.id_testimonio,
-        title: t.titulo,
-        description: t.descripcion,
-        content: t.contenido_texto,
-        url: t.url_medio,
-        duration: t.duracion,
-        latitude: t.latitud ? Number(t.latitud) : null,
-        longitude: t.longitud ? Number(t.longitud) : null,
-        createdAt: t.created_at,
-        status: t.estado.nombre,
-        format: t.medio.nombre,
-        author: t.usuarios_testimonios_subido_porTousuarios.nombre,
-        categories: t.testimonios_categorias.map((tc) => tc.categorias.nombre),
-        tags: t.testimonios_etiquetas.map((te) => te.etiquetas.nombre),
-        event: t.testimonios_eventos[0]?.eventos_historicos?.nombre,
-      })),
+      data: testimoniosConFavoritos,
       total,
       page,
       limit,

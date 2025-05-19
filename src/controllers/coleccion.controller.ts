@@ -40,6 +40,30 @@ export class ColeccionController {
         }
     }
 
+    static async getFavoriteCount(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+
+            if (!id) {
+                return res.status(400).json({ error: 'ID del testimonio no proporcionado' });
+            }
+
+            const favoriteCount = await prisma.colecciones_testimonios.count({
+                where: {
+                    id_testimonio: parseInt(id),
+                    colecciones: {
+                        titulo: 'Favoritos',
+                    },
+                },
+            });
+
+            res.json({ favoriteCount });
+        } catch (error) {
+            console.error('Error al obtener el conteo de favoritos:', error);
+            res.status(500).json({ error: 'Error al obtener el conteo de favoritos' });
+        }
+    }
+
     static async create(req: Request, res: Response) {
         try {
             const { titulo, descripcion, fecha_creacion, id_usuario } = req.body;

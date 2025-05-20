@@ -8,6 +8,7 @@ const router = express.Router();
 router.use(authenticateToken);
 
 router.get('/', CalificacionController.getAll as RequestHandler);
+router.get('/top-rated', CalificacionController.getTopRated as RequestHandler);
 router.get('/:id', CalificacionController.getById as RequestHandler);
 router.post('/', CalificacionController.create as RequestHandler);
 router.put('/:id', CalificacionController.update as RequestHandler);

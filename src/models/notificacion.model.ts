@@ -162,6 +162,52 @@ export class NotificacionModel {
     });
   }
 
+  static async notificarNuevoComentario(id_testimonio: number, id_usuario: number) {
+    // Obtener todos los administradores
+    const usuarios = await prisma.usuarios.findMany({
+      where: {
+        id_rol: 1 // 1 = ADMIN
+      }
+    });
+
+    // Crear notificaciones para cada administrador
+    const notificaciones = await Promise.all(
+      usuarios.map(usuario =>
+        this.create({
+          mensaje: "Se ha creado un nuevo comentario pendiente de aprobación",
+          id_testimonio,
+          id_estado: 1, // Estado pendiente
+          id_usuario: usuario.id_usuario
+        })
+      )
+    );
+
+    return notificaciones;
+  }
+
+  static async notificarCambioEstadoComentario(
+    id_testimonio: number,
+    id_usuario: number,
+    id_estado: number
+  ) {
+    let mensaje = "";
+    switch (id_estado) {
+      case 2:
+        mensaje = "Tu comentario ha sido aprobado";
+        break;
+      case 3:
+        mensaje = "Tu comentario ha sido rechazado";
+        break;
+    }
+
+    return this.create({
+      mensaje,
+      id_testimonio,
+      id_estado,
+      id_usuario
+    });
+  }
+
   static async marcarComoLeido(id: number) {
     return prisma.notificaciones.update({
       where: { id_notificacion: id },

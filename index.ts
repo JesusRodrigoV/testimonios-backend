@@ -11,6 +11,8 @@ import notificacionRouter from "@app/routes/notificacion.route";
 import coleccionRouter from "@app/routes/coleccion.route";
 import transcripcionRouter from "@app/routes/transcripcion.route";
 import calificacionRouter from "@app/routes/calificacion.route";
+import forotemaRouter from "@app/routes/forotema.route";
+import forocomentarioRouter from "@app/routes/forocomentario.route";
 
 const app = express();
 
@@ -27,6 +29,8 @@ app.use("/notifications", notificacionRouter);
 app.use("/collections", coleccionRouter);
 app.use("/transcription", transcripcionRouter);
 app.use("/score", calificacionRouter);
+app.use("/forumtopics", forotemaRouter);
+app.use("/forumcomments", forocomentarioRouter);
 
 app.use(
   (

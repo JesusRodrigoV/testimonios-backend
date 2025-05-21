@@ -91,6 +91,36 @@ model eventos_historicos {
   descripcion         String
   fecha               DateTime              @db.Date
   testimonios_eventos testimonios_eventos[]
+  foro_temas          foro_temas[]          @relation("foro_temas_eventos")
+}
+
+model foro_comentarios {
+  id_forocoment          Int                @id(map: "foro_comentarios_pk") @default(autoincrement())
+  contenido              String
+  fecha_creacion         DateTime           @default(now()) @db.Timestamptz(6)
+  creado_por_id_usuario  Int
+  id_forotema            Int
+  parent_id              Int?               @map("parent_id_forocoment")
+
+  usuarios               usuarios           @relation("foro_comentarios_usuario", fields: [creado_por_id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "foro_comentarios_usuario")
+  foro_temas             foro_temas         @relation(fields: [id_forotema], references: [id_forotema], onDelete: NoAction, onUpdate: NoAction, map: "foro_comentarios_temas")
+
+  parent                 foro_comentarios?  @relation("ForumCommentReplies", fields: [parent_id], references: [id_forocoment])
+  replies                foro_comentarios[] @relation("ForumCommentReplies")
+}
+
+model foro_temas {
+  id_forotema            Int                 @id(map: "foro_temas_pk") @default(autoincrement())
+  titulo                 String              @db.VarChar(100)
+  descripcion            String
+  fecha_creacion         DateTime            @default(now()) @db.Timestamptz(6)
+  creado_por_id_usuario  Int
+  id_evento              Int?
+  id_testimonio          Int?
+  usuarios               usuarios            @relation("foro_temas_usuario", fields: [creado_por_id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "foro_temas_usuario")
+  testimonios            testimonios?        @relation("foro_temas_testimonios", fields: [id_testimonio], references: [id_testimonio], onDelete: NoAction, onUpdate: NoAction, map: "foro_temas_testimonios")
+  eventos_historicos     eventos_historicos? @relation("foro_temas_eventos", fields: [id_evento], references: [id_evento], onDelete: NoAction, onUpdate: NoAction, map: "foro_temas_eventos")
+  foro_comentarios       foro_comentarios[]
 }
 
 model historial_testimonios {
@@ -194,6 +224,7 @@ model testimonios {
   testimonios_eventos                           testimonios_eventos[]
   transcripciones                               transcripciones[]
   notificaciones                                notificaciones[]
+  foro_temas                                    foro_temas[]              @relation("foro_temas_testimonios")
 }
 
 model testimonios_categorias {
@@ -263,4 +294,6 @@ model usuarios {
   rol                                                            rol                     @relation(fields: [id_rol], references: [id_rol], onDelete: NoAction, onUpdate: NoAction, map: "usuario_rol")
   notificaciones                                                 notificaciones[]
   likes_comentarios                                              likes_comentarios[]     @relation
+  foro_comentarios                                               foro_comentarios[]      @relation("foro_comentarios_usuario")
+  foro_temas                                                     foro_temas[]            @relation("foro_temas_usuario")
 }

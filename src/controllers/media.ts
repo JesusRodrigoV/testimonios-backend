@@ -67,8 +67,8 @@ export const searchTestimonies = async (req: Request, res: Response) => {
       category?: string;
       tag?: string;
       eventId?: number;
-      page?: number; // numero de pagina
-      limit?: number; // numero de testimonios por pagina
+      page?: number; 
+      limit?: number;
       highlighted?: boolean;
       status?: string;
     } = {

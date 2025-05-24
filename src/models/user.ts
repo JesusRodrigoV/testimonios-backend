@@ -1,4 +1,3 @@
-//model/user.ts
 import { compare, hash } from "bcryptjs";
 import speakeasy from "speakeasy";
 import QRCode from "qrcode";
@@ -79,7 +78,6 @@ export const createUser = async ({
 }: UserInput & { id_rol?: number }): Promise<User> => {
   const hashedPassword = await hash(password, 10);
 
-  // Crear el usuario y sus colecciones por defecto en una transacción
   return prisma.$transaction(async (tx) => {
     const user = await tx.usuarios.create({
       data: {
@@ -97,7 +95,6 @@ export const createUser = async ({
       },
     });
 
-    // Crear colección de Favoritos
     await tx.colecciones.create({
       data: {
         titulo: "Favoritos",
@@ -107,7 +104,6 @@ export const createUser = async ({
       },
     });
 
-    // Crear colección de Guardados
     await tx.colecciones.create({
       data: {
         titulo: "Guardados",
@@ -207,8 +203,6 @@ export const verify2FAToken = async (
   userId: number,
   token: string,
 ): Promise<{ isValid: boolean; user: User | null }> => {
-  console.log("Verificando token 2FA:", { userId, token });
-
   const user = await prisma.usuarios.findUnique({
     where: { id_usuario: userId },
     include: {
@@ -217,19 +211,13 @@ export const verify2FAToken = async (
   });
 
   if (!user?.two_factor_secret) {
-    console.log("No se encontró secret 2FA para el usuario");
     return { isValid: false, user: null };
   }
-
-  console.log("Secret encontrado:", user.two_factor_secret);
 
   const currentToken = speakeasy.totp({
     secret: user.two_factor_secret,
     encoding: "base32",
   });
-
-  console.log("Token actual generado:", currentToken);
-  console.log("Token recibido:", token);
 
   const isValid = speakeasy.totp.verify({
     secret: user.two_factor_secret,
@@ -238,10 +226,8 @@ export const verify2FAToken = async (
     window: 1,
   });
 
-  console.log("¿Es válido el token?:", isValid);
 
   if (isValid) {
-    // Si el token es válido, actualizar el estado de 2FA y último login
     await prisma.usuarios.update({
       where: { id_usuario: userId },
       data: {
@@ -281,13 +267,7 @@ export const regenerateQRCode = async (
 
 export const generatePasswordResetToken = async (userId: number) => {
   const token = crypto.randomBytes(32).toString("hex");
-  const expires = new Date(Date.now() + 3600000); // 1 hora
-
-  console.log("Generating reset token:", {
-    userId,
-    token,
-    expires,
-  });
+  const expires = new Date(Date.now() + 3600000); 
 
   try {
     const updatedUser = await prisma.usuarios.update({
@@ -296,12 +276,6 @@ export const generatePasswordResetToken = async (userId: number) => {
         password_reset_token: token,
         password_reset_expires: expires,
       },
-    });
-
-    console.log("Token stored in database:", {
-      userId: updatedUser.id_usuario,
-      storedToken: updatedUser.password_reset_token,
-      storedExpires: updatedUser.password_reset_expires,
     });
 
     return token;
@@ -315,28 +289,7 @@ export const resetPassword = async (
   token: string,
   newPassword: string,
 ): Promise<boolean> => {
-  console.log("Attempting password reset with token:", token);
-
-  // Primero buscar sin la restricción de fecha para ver si el token existe
-  const userWithoutExpiry = await prisma.usuarios.findFirst({
-    where: {
-      password_reset_token: token,
-    },
-  });
-
-  console.log(
-    "Found user without expiry check:",
-    userWithoutExpiry
-      ? {
-          id: userWithoutExpiry.id_usuario,
-          token: userWithoutExpiry.password_reset_token,
-          expires: userWithoutExpiry.password_reset_expires,
-        }
-      : "No user found",
-  );
-
   const now = new Date();
-  console.log("Current time:", now.toISOString());
 
   const user = await prisma.usuarios.findFirst({
     where: {
@@ -347,34 +300,27 @@ export const resetPassword = async (
     },
   });
 
-  console.log(
-    "Found user with expiry check:",
-    user
-      ? {
-          id: user.id_usuario,
-          token: user.password_reset_token,
-          expires: user.password_reset_expires,
-          currentTime: now,
-          isValid: user.password_reset_expires > now,
-        }
-      : "No valid user found",
-  );
-
   if (!user) return false;
 
   const hashedPassword = await hash(newPassword, 10);
 
-  await prisma.usuarios.update({
-    where: { id_usuario: user.id_usuario },
-    data: {
-      password: hashedPassword,
-      password_reset_token: null,
-      password_reset_expires: null,
-    },
+  await prisma.$transaction(async (tx) => {
+    await prisma.usuarios.update({
+      where: { id_usuario: user.id_usuario },
+      data: {
+        password: hashedPassword,
+        password_reset_token: null,
+        password_reset_expires: null,
+      },
+    });
+    await tx.refresh_tokens.deleteMany({
+      where: { id_usuario: user.id_usuario },
+    });
   });
 
   return true;
 };
+
 export const validatePassword = async (
   user: User,
   password: string,
@@ -382,24 +328,54 @@ export const validatePassword = async (
   return compare(password, user.password);
 };
 
-export const updateRefreshToken = async (
-  userId: number,
-  token: string | null,
-): Promise<void> => {
-  await prisma.usuarios.update({
-    where: { id_usuario: userId },
-    data: { refresh_token: token },
+export const createRefreshToken = async (
+  id_usuario: number,
+): Promise<{ token: string; expiresAt: Date }> => {
+  const token = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+  await prisma.refresh_tokens.create({
+    data: {
+      id_usuario,
+      token,
+      expiresAt,
+    },
   });
+
+  return { token, expiresAt };
 };
 
 export const findUserByRefreshToken = async (
   token: string,
 ): Promise<User | null> => {
-  return prisma.usuarios.findFirst({
-    where: { refresh_token: token },
-    include: {
-      rol: true,
+  const refreshToken = await prisma.refresh_tokens.findFirst({
+    where: {
+      token,
+      expiresAt: {
+        gt: new Date(),
+      },
     },
+    include: {
+      usuario: {
+        include: {
+          rol: true,
+        },
+      },
+    },
+  });
+
+  return refreshToken?.usuario || null;
+};
+
+export const revokeRefreshToken = async (token: string): Promise<void> => {
+  await prisma.refresh_tokens.deleteMany({
+    where: { token },
+  });
+};
+
+export const revokeAllRefreshTokens = async (id_usuario: number): Promise<void> => {
+  await prisma.refresh_tokens.deleteMany({
+    where: { id_usuario },
   });
 };
 

@@ -22,7 +22,7 @@ import {
   reset_password,
   setup2FA,
   verify2FA,
-} from "@app/controllers/auth";
+} from "@app/controllers/auth.controller";
 
 export const authRouter = Router();
 
@@ -64,4 +64,4 @@ authRouter.post(
 );
 authRouter.post("/verify-2fa", allow2FAVerification, verify2FA);
 authRouter.post("/logout", authenticateToken, logout);
-authRouter.post("/refresh", authenticateRefreshToken, refresh);
+authRouter.post("/refresh", refresh);

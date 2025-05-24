@@ -3,7 +3,6 @@ import {
   authSchema,
   createUser,
   findUserByEmail,
-  updateRefreshToken,
   validatePassword,
   userSchema,
   updateLastLogin,
@@ -15,6 +14,8 @@ import {
   verify2FAToken,
   regenerateQRCode,
   passwordSchema,
+  createRefreshToken,
+  revokeRefreshToken,
 } from "../models";
 import { safeParse } from "valibot";
 import { sign, verify } from "jsonwebtoken";
@@ -87,7 +88,7 @@ export const authRegister = async (
       id_rol: Rol.VISITOR,
     });
 
-    const { password, refresh_token, ...userResponse } = user;
+    const { password, ...userResponse } = user;
     res.status(201).json(userResponse);
   } catch (error) {
     if (error instanceof Error && error.message.includes("Unique constraint")) {
@@ -107,12 +108,8 @@ export const adminPostUsers = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  console.log("Received data:", req.body); // Add this line
-  console.log("Headers:", req.headers);
-  console.log("Body:", req.body);
   const result = safeParse(userSchema, req.body);
   if (!result.success) {
-    console.log("Validation errors:", result.issues); // Add this line
     res.status(400).json({
       message: "Bad Request",
       errors: result.issues,
@@ -213,6 +210,7 @@ export const adminPutUsers = async (
     });
   }
 };
+
 export const adminDeleteUsers = async (
   req: Request,
   res: Response,
@@ -229,7 +227,6 @@ export const adminDeleteUsers = async (
   }
 
   try {
-    // Verificar que no se esté eliminando a sí mismo
     if (req.user?.id_usuario === userId) {
       res.status(400).json({ message: "No puedes eliminar tu propia cuenta" });
       return;
@@ -255,21 +252,10 @@ export const adminDeleteUsers = async (
 };
 
 export const login = async (req: Request, res: Response): Promise<void> => {
-  console.log("Request body:", req.body);
   const result = safeParse(authSchema, req.body);
-  console.log("Validation result:", JSON.stringify(result, null, 2));
 
   if (!result.success) {
     res.status(400).json({ message: "Bad Request", errors: result.issues });
-    return;
-  }
-
-  if (!result.output || typeof result.output !== "object") {
-    res.status(400).json({
-      message: "Error de validación",
-      error: "Estructura de datos inválida",
-      result: result,
-    });
     return;
   }
 
@@ -283,14 +269,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Si el usuario requiere 2FA (admin o curador) y no está configurado
     if (
       [Rol.ADMIN, Rol.CURATOR].includes(user.id_rol) &&
       !user.two_factor_enabled
     ) {
-      // Verificar si ya tiene un secret 2FA pero no está habilitado
       if (!user.two_factor_secret) {
-        // Solo generar nuevo secret si no existe
         const { secret, qrCode } = await generate2FASecret(user.id_usuario);
         await send2FASetupEmail(user.email, secret, qrCode);
 
@@ -305,7 +288,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
           ),
         });
       } else {
-        // Si ya tiene secret pero no está habilitado, reenviar el QR existente
         const qrCode = await regenerateQRCode(
           user.two_factor_secret,
           user.email,
@@ -324,7 +306,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Si el usuario requiere 2FA y ya está configurado
     if (
       [Rol.ADMIN, Rol.CURATOR].includes(user.id_rol) &&
       user.two_factor_enabled
@@ -341,31 +322,30 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Actualizar último login
     await updateLastLogin(user.id_usuario);
 
-    // Generar tokens
     const accessToken = sign(
       {
         id_usuario: user.id_usuario,
         id_rol: user.id_rol,
       },
       config.jwtSecret,
-      { expiresIn: "15m" },
+      { expiresIn: "1h" },
     );
 
-    const refreshToken = sign(
-      { id_usuario: user.id_usuario },
-      config.jwtSecret,
-      { expiresIn: "7d" },
+    const { token: refresh_tokens } = await createRefreshToken(
+      user.id_usuario,
     );
 
-    // Actualizar refresh token
-    await updateRefreshToken(user.id_usuario, refreshToken);
+    res.cookie("refreshToken", refresh_tokens, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
 
     res.json({
       accessToken,
-      refreshToken,
       user: {
         id: user.id_usuario,
         email: user.email,
@@ -375,7 +355,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       },
     });
   } catch (error) {
-    console.error("Error detallado:", error); // <--- Log para debug
     res.status(500).json({
       message: "Error en el inicio de sesión",
       error: error instanceof Error ? error.message : "Error desconocido",
@@ -487,7 +466,7 @@ export const verify2FA = async (req: Request, res: Response): Promise<void> => {
     const { isValid, user } = await verify2FAToken(userId, token);
 
     if (!isValid || !user) {
-      res.status(400).json({ message: "Código inválido" });
+      res.status(400).json({ message: "Código 2FA inválido" });
       return;
     }
 
@@ -497,21 +476,23 @@ export const verify2FA = async (req: Request, res: Response): Promise<void> => {
         id_rol: user.id_rol,
       },
       config.jwtSecret,
-      { expiresIn: "15m" },
+      { expiresIn: "1h" },
     );
 
-    const refreshToken = sign(
-      { id_usuario: user.id_usuario },
-      config.jwtSecret,
-      { expiresIn: "7d" },
+    const { token: refreshToken } = await createRefreshToken(
+      user.id_usuario,
     );
 
-    await updateRefreshToken(user.id_usuario, refreshToken);
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
 
     res.json({
       message: "2FA verificado correctamente",
       accessToken,
-      refreshToken,
       user: {
         id: user.id_usuario,
         email: user.email,
@@ -532,13 +513,22 @@ export const verify2FA = async (req: Request, res: Response): Promise<void> => {
 export const logout = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id_usuario;
+    const refreshToken = req.cookies?.refreshToken;
 
     if (!userId) {
-      res.status(401).json({ message: "Unauthorized" });
+      res.status(401).json({ message: "No autorizado" });
       return;
     }
 
-    await updateRefreshToken(userId, null);
+    if (refreshToken) {
+      await revokeRefreshToken(refreshToken);
+    }
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
     res.json({ message: "Successfully logged out" });
   } catch (error) {
     res.status(500).json({
@@ -549,49 +539,72 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
 };
 
 export const refresh = async (req: Request, res: Response): Promise<void> => {
-  const { refreshToken } = req.body;
+  const refreshToken = req.cookies?.refreshToken;
 
   if (!refreshToken) {
-    res.status(401).json({ message: "Token requerido" });
+    res.status(401).json({ message: "Refresh token requerido" });
     return;
   }
 
   try {
-    const decoded = verify(refreshToken, config.jwtSecret) as { id_usuario: number };
+    const decoded = verify(refreshToken, config.jwtSecret) as {
+      id_usuario: number;
+    };
     const user = await findUserByRefreshToken(refreshToken);
 
     if (!user || user.id_usuario !== decoded.id_usuario) {
-      res.status(403).json({ message: "Token inválido" });
+      await revokeRefreshToken(refreshToken);
+      res.status(403).json({ message: "Refresh token inválido" });
+      return;
+    }
+
+    if (
+      [Rol.ADMIN, Rol.CURATOR].includes(user.id_rol) &&
+      !user.two_factor_enabled
+    ) {
+      res.status(403).json({
+        message: "2FA requerido pero no configurado",
+        requires2FA: true,
+      });
       return;
     }
 
     const newAccessToken = sign(
       {
         id_usuario: user.id_usuario,
-        email: user.email,
-        role: user.id_rol,
+        id_rol: user.id_rol,
       },
       config.jwtSecret,
-      { expiresIn: "15m" },
+      { expiresIn: "1h" },
     );
 
-    // Opcional: Generar un nuevo refreshToken
-    const newRefreshToken = sign(
-      { id_usuario: user.id_usuario },
-      config.jwtSecret,
-      { expiresIn: "7d" },
+    await revokeRefreshToken(refreshToken);
+    const deviceInfo = req.headers["user-agent"] || "unknown";
+    const { token: newRefreshToken } = await createRefreshToken(
+      user.id_usuario,
     );
 
-    await updateRefreshToken(user.id_usuario, newRefreshToken);
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
 
     res.json({
       accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
     });
   } catch (error) {
-    res.status(403).json({
-      message: "Token inválido o expirado",
-      error: error instanceof Error ? error.message : "Error desconocido",
-    });
+    const errorMessage =
+      error instanceof Error ? error.message : "Error desconocido";
+    if (errorMessage.includes("jwt expired")) {
+      await revokeRefreshToken(refreshToken);
+      res.status(403).json({ message: "Refresh token expirado" });
+    } else {
+      res.status(403).json({
+        message: "Error al refrescar token",
+        error: errorMessage,
+      });
+    }
   }
 };

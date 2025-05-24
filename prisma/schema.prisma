@@ -172,6 +172,15 @@ model permisos {
   testimonios     testimonios @relation(fields: [id_testimonio], references: [id_testimonio], onDelete: NoAction, onUpdate: NoAction, map: "permisos_testimonios")
 }
 
+model refresh_tokens {
+  id            Int       @id @default(autoincrement())
+  id_usuario        Int
+  token         String
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
+  usuario       usuarios  @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade)
+}
+
 model rol {
   id_rol   Int        @id(map: "rol_pk") @default(autoincrement())
   nombre   String     @db.VarChar(50)
@@ -276,7 +285,6 @@ model usuarios {
   created_at                                                     DateTime                @default(now()) @db.Timestamptz(6)
   updated_at                                                     DateTime                @default(now()) @db.Timestamptz(6)
   id_rol                                                         Int
-  refresh_token                                                  String?                 @db.VarChar(255)
   two_factor_enabled                                             Boolean?
   password_reset_token                                           String?                 @db.VarChar(255)
   password_reset_expires                                         DateTime?               @db.Timestamptz(6)
@@ -296,4 +304,5 @@ model usuarios {
   likes_comentarios                                              likes_comentarios[]     @relation
   foro_comentarios                                               foro_comentarios[]      @relation("foro_comentarios_usuario")
   foro_temas                                                     foro_temas[]            @relation("foro_temas_usuario")
+  refresh_tokens                                                 refresh_tokens[]
 }

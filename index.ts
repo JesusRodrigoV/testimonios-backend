@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import config from "./config";
-import { authRouter } from "./src/routes/auth";
+import { authRouter } from "@app/routes/auth.route";
 import testimoniosRouter from "@app/routes/testimonios";
 import categoriaRouter from "@app/routes/CategoriaRoutes"; 
 import etiquetaRouter from "@app/routes/etiqueta";

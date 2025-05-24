@@ -10,7 +10,12 @@ export class ForoComentarioModel {
             id_usuario: true,
             nombre: true,
             email: true,
-            profile_image: true
+            profile_image: true,
+            rol: {
+              select: {
+                nombre: true
+              }
+            }
           }
         }
       }
@@ -26,7 +31,12 @@ export class ForoComentarioModel {
             id_usuario: true,
             nombre: true,
             email: true,
-            profile_image: true
+            profile_image: true,
+            rol: {
+              select: {
+                nombre: true
+              }
+            }
           }
         }
       }
@@ -42,7 +52,12 @@ export class ForoComentarioModel {
             id_usuario: true,
             nombre: true,
             email: true,
-            profile_image: true
+            profile_image: true,
+            rol: {
+              select: {
+                nombre: true
+              }
+            }
           }
         }
       }
@@ -68,7 +83,12 @@ export class ForoComentarioModel {
             id_usuario: true,
             nombre: true,
             email: true,
-            profile_image: true
+            profile_image: true,
+            rol: {
+              select: {
+                nombre: true
+              }
+            }
           }
         }
       }
@@ -87,7 +107,12 @@ export class ForoComentarioModel {
             id_usuario: true,
             nombre: true,
             email: true,
-            profile_image: true
+            profile_image: true,
+            rol: {
+              select: {
+                nombre: true
+              }
+            }
           }
         }
       }

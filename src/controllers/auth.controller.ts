@@ -262,6 +262,43 @@ export const adminDeleteUsers = async (
   }
 };
 
+export const getUserInfo = async (req: Request, res: Response): Promise<void> => {
+  const userIdParam = req.params.id;
+  if (!userIdParam) {
+    throw new Error("ID de usuario requerido");
+  }
+
+  const userId = parseInt(userIdParam);
+
+  if (isNaN(userId)) {
+    throw new Error("ID de usuario inválido");
+  }
+
+  try {
+    const user = await prisma.usuarios.findUnique({
+      where: { id_usuario: userId },
+      select: {
+        id_usuario: true,
+        email: true,
+        nombre: true,
+        biografia: true,
+        profile_image: true,
+        rol: {
+          select: {
+            nombre: true
+          }
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error buscando información del usuario",
+      error: error instanceof Error ? error.message : "Error desconocido",
+    });
+  }
+
+}
+
 export const login = async (req: Request, res: Response): Promise<void> => {
   const result = safeParse(authSchema, req.body);
 

@@ -16,6 +16,7 @@ import {
   authProfile,
   authRegister,
   forgot_password,
+  getUserInfo,
   login,
   logout,
   refresh,
@@ -28,6 +29,7 @@ export const authRouter = Router();
 
 authRouter.use(logActivity);
 authRouter.get("/profile", authenticateToken, authProfile);
+authRouter.get("/user-info/:id", authenticateToken, getUserInfo);
 authRouter.post("/register", authRegister);
 authRouter.post(
   "/users",

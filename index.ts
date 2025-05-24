@@ -3,7 +3,7 @@ import cors from "cors";
 import config from "./config";
 import { authRouter } from "@app/routes/auth.route";
 import testimoniosRouter from "@app/routes/testimonios";
-import categoriaRouter from "@app/routes/CategoriaRoutes"; 
+import categoriaRouter from "@app/routes/CategoriaRoutes";
 import etiquetaRouter from "@app/routes/etiqueta";
 import eventoRouter from "@app/routes/evento";
 import comentarioRouter from "@app/routes/comentario.route";
@@ -16,7 +16,12 @@ import forocomentarioRouter from "@app/routes/forocomentario.route";
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:4200',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(express.json());
 
 app.use("/auth", authRouter);

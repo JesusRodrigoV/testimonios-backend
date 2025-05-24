@@ -74,34 +74,3 @@ export const authorizeRoles = (...allowedRoles: number[]) => {
     next();
   };
 };
-
-/*
-export const authorizeTestimonioAccess = (
-  permission: "READ" | "WRITE" | "DELETE",
-) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    const testimonioId = parseInt(req.params.id);
-    const userId = req.user?.id_usuario;
-
-    if (!userId) {
-      return res.status(401).json({ message: "No autenticado" });
-    }
-
-    const acceso = await prisma.permisos.findFirst({
-      where: {
-        id_testimonio: testimonioId,
-        id_rol: req.user.id_rol,
-        permiso: permission,
-      },
-    });
-
-    if (!acceso) {
-      return res
-        .status(403)
-        .json({ message: "No tienes permisos para esta acción" });
-    }
-
-    next();
-  };
-};
-*/

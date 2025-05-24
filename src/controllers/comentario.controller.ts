@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { ComentarioModel } from '../models/comentario.model';
+import { NotificacionModel } from '../models/notificacion.model';
 import { Rol } from '@app/middleware/authorization';
 
 export class ComentarioController {
@@ -75,7 +76,7 @@ export class ComentarioController {
         return res.status(400).json({ error: 'Contenido e ID de testimonio son requeridos' });
       }
 
-      const comentario = await ComentarioModel.create({ // los comentarios nuevos tienen estado pendiente
+      const comentario = await ComentarioModel.create({
         contenido,
         id_estado: 1, // Estado pendiente
         fecha_creacion: new Date(),
@@ -83,6 +84,9 @@ export class ComentarioController {
         id_testimonio,
         parent_id: parent_id ? parseInt(parent_id) : undefined,
       });
+
+      // Notificar a los administradores sobre el nuevo comentario
+      await NotificacionModel.notificarNuevoComentario(id_testimonio, req.user!.id_usuario);
 
       res.status(201).json(comentario);
     } catch (error) {
@@ -106,10 +110,20 @@ export class ComentarioController {
       if (req.user?.id_rol === Rol.ADMIN) {
         const { contenido, id_estado } = req.body;
         const comentarioActualizado = await ComentarioModel.update(id, { contenido, id_estado });
+        
+        // Notificar al usuario sobre el cambio de estado de su comentario
+        if (id_estado && id_estado !== comentario.id_estado) {
+          await NotificacionModel.notificarCambioEstadoComentario(
+            comentario.id_testimonio,
+            comentario.creado_por_id_usuario,
+            id_estado
+          );
+        }
+        
         return res.json(comentarioActualizado);
       }
 
-      if (comentario.creado_por_id_usuario !== req.user!.id_usuario) { // si no es admin, solo el creador del comentario puede modificarlo
+      if (comentario.creado_por_id_usuario !== req.user!.id_usuario) {
         return res.status(403).json({ error: 'No tiene permiso para modificar este comentario' });
       }
 

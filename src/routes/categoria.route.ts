@@ -1,6 +1,6 @@
 import express from 'express';
 import type { RequestHandler } from 'express';
-import { CategoriaController } from '../controllers/CategoriaController';
+import { CategoriaController } from '../controllers/categoria.controller';
 
 export const categoriaRouter = express.Router();
 

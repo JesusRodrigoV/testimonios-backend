@@ -6,7 +6,6 @@ import {
 import { PrismaClient, Prisma } from "@generated/prisma";
 import { parse } from "valibot";
 import { NotificacionModel } from "@app/models/notificacion.model";
-import { Redis } from "ioredis";
 
 type RoleId = 1 | 2 | 3 | 4;
 
@@ -17,7 +16,6 @@ interface RolePermission {
 }
 
 const prisma = new PrismaClient();
-const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
 
 const rolePermissions: Record<RoleId, RolePermission> = {
   1: {
@@ -210,8 +208,6 @@ export const testimonyService = {
       throw new Error("No autorizado para ver este testimonio");
     }
 
-
-
     return {
       id: testimony.id_testimonio,
       title: testimony.titulo,
@@ -243,8 +239,38 @@ export const testimonyService = {
 
     return count;
   },
-  
- searchTestimonies: async (
+
+  getTestimonyByUserId: async (userId: number) => {
+    const testimonies = await prisma.testimonios.findMany({
+      where: { subido_por: userId },
+      select: {
+        id_testimonio: true,
+        titulo: true,
+        descripcion: true,
+        contenido_texto: true,
+        url_medio: true,
+        duracion: true,
+        latitud: true,
+        longitud: true,
+        created_at: true,
+        updated_at: true,
+        estado: { select: { nombre: true } },
+        medio: { select: { nombre: true } },
+        testimonios_categorias: {
+          include: { categorias: { select: { nombre: true } } },
+        },
+        testimonios_etiquetas: {
+          include: { etiquetas: { select: { nombre: true } } },
+        },
+        testimonios_eventos: {
+          include: { eventos_historicos: { select: { nombre: true } } },
+        },
+        usuarios_testimonios_subido_porTousuarios: { select: { nombre: true } },
+      },
+    });
+  },
+
+  searchTestimonies: async (
     params: {
       keyword?: string;
       dateFrom?: string;
@@ -262,11 +288,11 @@ export const testimonyService = {
     userRole: number,
   ) => {
     console.log(
-      'Parámetros de búsqueda:',
+      "Parámetros de búsqueda:",
       params,
-      'Usuario ID:',
+      "Usuario ID:",
       userId,
-      'Rol:',
+      "Rol:",
       userRole,
     );
 
@@ -276,9 +302,9 @@ export const testimonyService = {
 
     if (params.keyword) {
       where.OR = [
-        { titulo: { contains: params.keyword, mode: 'insensitive' } },
-        { descripcion: { contains: params.keyword, mode: 'insensitive' } },
-        { contenido_texto: { contains: params.keyword, mode: 'insensitive' } },
+        { titulo: { contains: params.keyword, mode: "insensitive" } },
+        { descripcion: { contains: params.keyword, mode: "insensitive" } },
+        { contenido_texto: { contains: params.keyword, mode: "insensitive" } },
       ];
     }
 
@@ -296,7 +322,7 @@ export const testimonyService = {
       where.testimonios_categorias = {
         some: {
           categorias: {
-            nombre: { contains: params.category, mode: 'insensitive' },
+            nombre: { contains: params.category, mode: "insensitive" },
           },
         },
       };
@@ -305,7 +331,7 @@ export const testimonyService = {
     if (params.tag) {
       where.testimonios_etiquetas = {
         some: {
-          etiquetas: { nombre: { contains: params.tag, mode: 'insensitive' } },
+          etiquetas: { nombre: { contains: params.tag, mode: "insensitive" } },
         },
       };
     }
@@ -322,14 +348,14 @@ export const testimonyService = {
       }[params.status];
       if (!statusId || !permissions.canViewStatuses.includes(params.status)) {
         throw new Error(
-          'No tienes permiso para ver testimonios con este estado',
+          "No tienes permiso para ver testimonios con este estado",
         );
       }
       where.id_estado = statusId;
     } else {
       where.id_estado = {
         in: permissions.canViewStatuses.map((status) =>
-          status === 'Pendiente' ? 1 : status === 'Aprobado' ? 2 : 3,
+          status === "Pendiente" ? 1 : status === "Aprobado" ? 2 : 3,
         ),
       };
     }
@@ -339,7 +365,7 @@ export const testimonyService = {
     const limit = params.highlighted ? 3 : (params.limit ?? 5);
     const skip = (page - 1) * limit;
 
-    console.log('Cláusula where de Prisma:', where);
+    console.log("Cláusula where de Prisma:", where);
 
     const select = {
       id_testimonio: true,
@@ -371,21 +397,20 @@ export const testimonyService = {
         skip,
         take: limit,
         orderBy: params.highlighted
-          ? [{ calificaciones: { _count: 'desc' } }, { created_at: 'desc' }]
-          : { created_at: 'desc' },
+          ? [{ calificaciones: { _count: "desc" } }, { created_at: "desc" }]
+          : { created_at: "desc" },
         select,
       }),
       prisma.testimonios.count({ where }),
     ]);
 
-    
     const testimoniosConFavoritos = await Promise.all(
       testimonies.map(async (t) => {
         const favoriteCount = await prisma.colecciones_testimonios.count({
           where: {
             id_testimonio: t.id_testimonio,
             colecciones: {
-              titulo: 'Favoritos',
+              titulo: "Favoritos",
             },
           },
         });
@@ -402,10 +427,12 @@ export const testimonyService = {
           status: t.estado.nombre,
           format: t.medio.nombre,
           author: t.usuarios_testimonios_subido_porTousuarios.nombre,
-          categories: t.testimonios_categorias.map((tc) => tc.categorias.nombre),
+          categories: t.testimonios_categorias.map(
+            (tc) => tc.categorias.nombre,
+          ),
           tags: t.testimonios_etiquetas.map((te) => te.etiquetas.nombre),
           event: t.testimonios_eventos[0]?.eventos_historicos?.nombre,
-          favoriteCount, 
+          favoriteCount,
         };
       }),
     );

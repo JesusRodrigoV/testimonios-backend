@@ -53,9 +53,35 @@ export const getTestimonyCount = async (req: Request, res: Response) => {
     const count = await testimonyService.getTestimonyCount();
     res.json(count);
   } catch (error) {
-    res.status(400).json({ error: error instanceof Error ? error.message : "Error al obtener el conteo de testimonios" });
+    res.status(400).json({
+      error:
+        error instanceof Error
+          ? error.message
+          : "Error al obtener el conteo de testimonios",
+    });
   }
-}
+};
+
+export const getTestimoniesByUserId = async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.userId;
+
+    if (!userId) throw new Error("ID de usuario requerido");
+
+    const testimonies = await testimonyService.getTestimonyByUserId(
+      Number(userId),
+    );
+
+    res.json(testimonies);
+  } catch (error) {
+    res.status(400).json({
+      error:
+        error instanceof Error
+          ? error.message
+          : "Error al obtener el conteo de testimonios",
+    });
+  }
+};
 
 export const searchTestimonies = async (req: Request, res: Response) => {
   try {
@@ -67,7 +93,7 @@ export const searchTestimonies = async (req: Request, res: Response) => {
       category?: string;
       tag?: string;
       eventId?: number;
-      page?: number; 
+      page?: number;
       limit?: number;
       highlighted?: boolean;
       status?: string;
@@ -94,7 +120,6 @@ export const searchTestimonies = async (req: Request, res: Response) => {
       req.user?.id_usuario || 0,
       req.user?.id_rol || 4,
     );
-
 
     res.json(result);
   } catch (error) {
@@ -182,10 +207,6 @@ export const getAllCategories = async (req: Request, res: Response) => {
     });
   }
 };
-
-
-
-
 
 export const getAllMediaTypes = async (req: Request, res: Response) => {
   try {

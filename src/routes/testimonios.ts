@@ -11,6 +11,7 @@ import {
   getAllMediaTypes,
   getAllStatuses,
   getTestimonyCount,
+  getTestimoniesByUserId,
 } from "@app/controllers/media";
 import { authenticateToken } from "@app/middleware/authentication";
 import { authorizeRoles } from "@app/middleware/authorization";
@@ -39,5 +40,6 @@ router.get("/map/data", getTestimonyMap);
 router.get("/categories", getAllCategories);
 router.get("/media-types", authenticateToken, getAllMediaTypes);
 router.get("/statuses", authenticateToken, getAllStatuses);
+router.get("/my-uploads", authenticateToken, getTestimoniesByUserId);
 
 export default router;

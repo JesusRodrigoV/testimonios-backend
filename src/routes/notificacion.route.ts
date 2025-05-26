@@ -3,16 +3,13 @@ import type { RequestHandler } from 'express';
 import { NotificacionController } from '../controllers/notificacion.controller';
 import { authenticateToken } from '@app/middleware/authentication';
 
-const router = express.Router();
+export const notificacionRouter = express.Router();
 
-// Todas las rutas requieren autenticación
-router.use(authenticateToken);
+notificacionRouter.use(authenticateToken);
 
-router.get('/', NotificacionController.getAll as RequestHandler);
-router.get('/unread', NotificacionController.getUnread as RequestHandler);
-router.get('/:id', NotificacionController.getById as RequestHandler);
-router.put('/:id/leer', NotificacionController.marcarComoLeido as RequestHandler);
-router.put('/:id/estado', NotificacionController.cambiarEstado as RequestHandler);
-router.delete('/:id', NotificacionController.delete as RequestHandler);
-
-export default router;
+notificacionRouter.get('/', NotificacionController.getAll as RequestHandler);
+notificacionRouter.get('/unread', NotificacionController.getUnread as RequestHandler);
+notificacionRouter.get('/:id', NotificacionController.getById as RequestHandler);
+notificacionRouter.put('/:id/leer', NotificacionController.marcarComoLeido as RequestHandler);
+notificacionRouter.put('/:id/estado', NotificacionController.cambiarEstado as RequestHandler);
+notificacionRouter.delete('/:id', NotificacionController.delete as RequestHandler);

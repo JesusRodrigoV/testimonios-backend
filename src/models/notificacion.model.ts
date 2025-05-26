@@ -109,22 +109,20 @@ export class NotificacionModel {
   }
 
   static async notificarNuevoTestimonio(id_testimonio: number, id_usuario: number) {
-    // Obtener todos los curadores y administradores
     const usuarios = await prisma.usuarios.findMany({
       where: {
         id_rol: {
-          in: [1, 2] // 1 = ADMIN, 2 = CURADOR
+          in: [1, 2]
         }
       }
     });
 
-    // Crear notificaciones para cada curador y administrador
     const notificaciones = await Promise.all(
       usuarios.map(usuario =>
         this.create({
           mensaje: "Se ha subido un nuevo testimonio para revisión",
           id_testimonio,
-          id_estado: 1, // Estado pendiente
+          id_estado: 1,
           id_usuario: usuario.id_usuario
         })
       )
@@ -163,20 +161,18 @@ export class NotificacionModel {
   }
 
   static async notificarNuevoComentario(id_testimonio: number, id_usuario: number) {
-    // Obtener todos los administradores
     const usuarios = await prisma.usuarios.findMany({
       where: {
-        id_rol: 1 // 1 = ADMIN
+        id_rol: 1
       }
     });
 
-    // Crear notificaciones para cada administrador
     const notificaciones = await Promise.all(
       usuarios.map(usuario =>
         this.create({
           mensaje: "Se ha creado un nuevo comentario pendiente de aprobación",
           id_testimonio,
-          id_estado: 1, // Estado pendiente
+          id_estado: 1,
           id_usuario: usuario.id_usuario
         })
       )

@@ -1,8 +1,6 @@
 import { getAllTags } from "@app/controllers/etiqueta";
 import express from "express";
 
-const router = express.Router();
+export const etiquetaRouter = express.Router();
 
-router.get("/", getAllTags);
-
-export default router;
+etiquetaRouter.get("/", getAllTags);

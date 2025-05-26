@@ -1,18 +1,7 @@
 import express from "express";
 import cors from "cors";
 import config from "./config";
-import { authRouter } from "@app/routes/auth.route";
-import testimoniosRouter from "@app/routes/testimonios.route";
-import categoriaRouter from "@app/routes/CategoriaRoutes";
-import etiquetaRouter from "@app/routes/etiqueta";
-import eventoRouter from "@app/routes/evento";
-import comentarioRouter from "@app/routes/comentario.route";
-import notificacionRouter from "@app/routes/notificacion.route";
-import coleccionRouter from "@app/routes/coleccion.route";
-import transcripcionRouter from "@app/routes/transcripcion.route";
-import calificacionRouter from "@app/routes/calificacion.route";
-import forotemaRouter from "@app/routes/forotema.route";
-import forocomentarioRouter from "@app/routes/forocomentario.route";
+import * as routers from '@app/routes';
 
 const app = express();
 
@@ -22,20 +11,20 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-app.use(express.json());
 
-app.use("/auth", authRouter);
-app.use("/media", testimoniosRouter);
-app.use("/categories", categoriaRouter);
-app.use("/tags", etiquetaRouter);
-app.use("/events", eventoRouter);
-app.use("/comments", comentarioRouter);
-app.use("/notifications", notificacionRouter);
-app.use("/collections", coleccionRouter);
-app.use("/transcription", transcripcionRouter);
-app.use("/score", calificacionRouter);
-app.use("/forumtopics", forotemaRouter);
-app.use("/forumcomments", forocomentarioRouter);
+app.use(express.json());
+app.use("/auth", routers.authRouter);
+app.use("/media", routers.testimoniosRouter);
+app.use("/categories", routers.categoriaRouter);
+app.use("/tags", routers.etiquetaRouter);
+app.use("/events", routers.eventoRouter);
+app.use("/comments", routers.comentarioRouter);
+app.use("/notifications", routers.notificacionRouter);
+app.use("/collections", routers.coleccionRouter);
+app.use("/transcription", routers.transcripcionRouter);
+app.use("/score", routers.calificacionRouter);
+app.use("/forumtopics", routers.forotemaRouter);
+app.use("/forumcomments", routers.forocomentarioRouter);
 
 app.use(
   (

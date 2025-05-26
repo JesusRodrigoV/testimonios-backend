@@ -3,15 +3,12 @@ import type { RequestHandler } from 'express';
 import { CalificacionController } from '../controllers/calificacion.controller';
 import { authenticateToken } from '@app/middleware/authentication';
 
-const router = express.Router();
+export const calificacionRouter = express.Router();
 
-router.use(authenticateToken);
+calificacionRouter.get('/top-rated', CalificacionController.getTopRated as RequestHandler);
+calificacionRouter.get('/', authenticateToken,  CalificacionController.getAll as RequestHandler);
+calificacionRouter.get('/:id', authenticateToken, CalificacionController.getById as RequestHandler);
+calificacionRouter.post('/', authenticateToken, CalificacionController.create as RequestHandler);
+calificacionRouter.put('/:id',authenticateToken,  CalificacionController.update as RequestHandler);
+calificacionRouter.delete('/:id',authenticateToken,  CalificacionController.delete as RequestHandler);
 
-router.get('/', CalificacionController.getAll as RequestHandler);
-router.get('/top-rated', CalificacionController.getTopRated as RequestHandler);
-router.get('/:id', CalificacionController.getById as RequestHandler);
-router.post('/', CalificacionController.create as RequestHandler);
-router.put('/:id', CalificacionController.update as RequestHandler);
-router.delete('/:id', CalificacionController.delete as RequestHandler);
-
-export default router;

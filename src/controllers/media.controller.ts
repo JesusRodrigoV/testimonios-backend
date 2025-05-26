@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { testimonyService } from '@app/services/media';
-import { parse, ValiError } from 'valibot';
+import { parse, partial, ValiError } from 'valibot';
 import { inputTestimonySchema } from '@app/models/testimony';
 
 export class TestimonyController {
@@ -178,6 +178,41 @@ export class TestimonyController {
       console.error('Error en getMapData:', error);
       res.status(500).json({
         error: 'Error al obtener datos del mapa',
+        details: error instanceof Error ? error.message : 'Error desconocido',
+      });
+    }
+  }
+
+  static async update(req: Request, res: Response) {
+    try {
+      if (!req.user?.id_usuario) {
+        return res.status(401).json({ error: 'Usuario no autenticado' });
+      }
+      if (!req.params.id) {
+        return res.status(400).json({ error: 'ID de testimonio requerido' });
+      }
+
+      const id = parseInt(req.params.id);
+      const partialSchema = partial(inputTestimonySchema);
+      const validatedData = parse(partialSchema, req.body); 
+      const testimony = await testimonyService.updateTestimony(
+        id,
+        validatedData,
+        req.user.id_usuario,
+        req.user.id_rol
+      );
+      res.json(testimony);
+    } catch (error) {
+      console.error('Error en update:', error);
+      if (error instanceof ValiError) {
+        const errorMessage = error.issues.map((issue) => issue.message).join('; ');
+        return res.status(400).json({
+          error: 'Datos de entrada inválidos',
+          details: errorMessage,
+        });
+      }
+      res.status(500).json({
+        error: 'Error al actualizar el testimonio',
         details: error instanceof Error ? error.message : 'Error desconocido',
       });
     }

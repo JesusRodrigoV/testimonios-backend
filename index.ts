@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import config from "./config";
 import { authRouter } from "@app/routes/auth.route";
-import testimoniosRouter from "@app/routes/testimonios";
+import testimoniosRouter from "@app/routes/testimonios.route";
 import categoriaRouter from "@app/routes/CategoriaRoutes";
 import etiquetaRouter from "@app/routes/etiqueta";
 import eventoRouter from "@app/routes/evento";

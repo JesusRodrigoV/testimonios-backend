@@ -22,7 +22,6 @@ import { sign, verify } from "jsonwebtoken";
 import config from "config";
 import { send2FASetupEmail, sendPasswordResetEmail } from "@app/lib/email";
 import prisma from "@app/lib/prisma";
-import { uploadMedia } from "@app/lib/cloudinary";
 
 export const authProfile = async (
   req: Request,
@@ -54,7 +53,7 @@ export const authProfile = async (
     }
 
     res.json({
-      id: user.id_usuario,
+      id_usuario: user.id_usuario,
       email: user.email,
       nombre: user.nombre,
       biografia: user.biografia,
@@ -395,7 +394,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     res.json({
       accessToken,
       user: {
-        id: user.id_usuario,
+        id_usuario: user.id_usuario,
         email: user.email,
         role: user.id_rol,
         nombre: user.nombre,
@@ -542,7 +541,7 @@ export const verify2FA = async (req: Request, res: Response): Promise<void> => {
       message: "2FA verificado correctamente",
       accessToken,
       user: {
-        id: user.id_usuario,
+        id_usuario: user.id_usuario,
         email: user.email,
         role: user.id_rol,
         nombre: user.nombre,

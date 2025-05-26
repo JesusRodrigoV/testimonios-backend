@@ -268,6 +268,8 @@ export const testimonyService = {
         usuarios_testimonios_subido_porTousuarios: { select: { nombre: true } },
       },
     });
+
+    return testimonies;
   },
 
   searchTestimonies: async (

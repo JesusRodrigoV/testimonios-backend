@@ -29,7 +29,7 @@ const writeFileAsync = promisify(fs.writeFile);
 const unlinkAsync = promisify(fs.unlink);
 
 export class TranscripcionService {
-  private async descargarArchivo(url: string): Promise<string> { // descargar un archivo desde una url
+  private async descargarArchivo(url: string): Promise<string> {
     try {
       const response = await axios({
         method: 'GET',

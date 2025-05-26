@@ -12,6 +12,7 @@ export const config = {
     investigador: 3,
     visitante: 4,
   },
+  redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
 };
 
 export default config;

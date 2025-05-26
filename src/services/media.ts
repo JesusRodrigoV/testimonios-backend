@@ -6,6 +6,7 @@ import {
 import { PrismaClient, Prisma } from "@generated/prisma";
 import { parse } from "valibot";
 import { NotificacionModel } from "@app/models/notificacion.model";
+import { Redis } from "ioredis";
 
 type RoleId = 1 | 2 | 3 | 4;
 
@@ -16,6 +17,7 @@ interface RolePermission {
 }
 
 const prisma = new PrismaClient();
+const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
 
 const rolePermissions: Record<RoleId, RolePermission> = {
   1: {
@@ -241,8 +243,8 @@ export const testimonyService = {
 
     return count;
   },
-
-  searchTestimonies: async (
+  
+ searchTestimonies: async (
     params: {
       keyword?: string;
       dateFrom?: string;

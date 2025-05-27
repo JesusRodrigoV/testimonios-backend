@@ -6,10 +6,10 @@ import prisma from 'src/lib/prisma';
 export class ColeccionController {
     static async getAll(req: Request, res: Response) {
         try {
-            if (req.user?.id_rol === Rol.ADMIN) { // solo los admins ven todas las colecciones
+            if (req.user?.id_rol === 1) {
                 const colecciones = await ColeccionModel.findAll();
                 return res.json(colecciones);
-            } else { // los usuarios normales ven solo sus propias colecciones
+            } else { 
                 const colecciones = await ColeccionModel.findByUserId(req.user!.id_usuario);
                 return res.json(colecciones);
             }

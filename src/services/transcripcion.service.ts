@@ -11,6 +11,7 @@ interface DeepgramResponse {
       alternatives: Array<{
         transcript: string;
       }>;
+      detected_language?: string;
     }>;
   };
   metadata: {
@@ -78,7 +79,7 @@ export class TranscripcionService {
       const audioBuffer = fs.readFileSync(tempFilePath);
 
       // realizamos la transcripción 
-      const response = await fetch('https://api.deepgram.com/v1/listen?language=es&model=nova-2&smart_format=true&punctuate=true&diarize=true', {
+      const response = await fetch('https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true&punctuate=true&diarize=true&detect_language=true', {
         method: 'POST',
         headers: {
           'Authorization': `Token ${config.DEEPGRAM_API_KEY}`,
@@ -100,11 +101,14 @@ export class TranscripcionService {
         throw new Error('No se pudo obtener la transcripción del audio');
       }
 
+      // Obtenemos el idioma detectado
+      const idiomaDetectado = data.results?.channels?.[0]?.detected_language || 'unknown';
+
       // guardamos la transcripción en la bd
       const transcripcion = await prisma.transcripciones.create({
         data: {
           contenido: data.results.channels[0].alternatives[0].transcript,
-          idioma: 'es',
+          idioma: idiomaDetectado,
           testimonios: {
             connect: {
               id_testimonio: testimonioId

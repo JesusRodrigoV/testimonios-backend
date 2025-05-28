@@ -213,6 +213,18 @@ export const testimonyService = {
       throw new Error("No autorizado para ver este testimonio");
     }
 
+    const ratingStats = await prisma.calificaciones.aggregate({
+      where: {
+        id_testimonio: id
+      },
+      _avg: {
+        puntuacion: true
+      },
+      _count: {
+        id_calificacion: true
+      }
+    });
+
     return {
       id: testimony.id_testimonio,
       title: testimony.titulo,
@@ -232,6 +244,10 @@ export const testimonyService = {
       ),
       tags: testimony.testimonios_etiquetas.map((te) => te.etiquetas.nombre),
       event: testimony.testimonios_eventos[0]?.eventos_historicos?.nombre,
+      rating: {
+        average: ratingStats._avg.puntuacion || 0,
+        total: ratingStats._count.id_calificacion
+      }
     };
   },
 

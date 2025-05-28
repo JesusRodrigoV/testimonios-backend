@@ -133,4 +133,21 @@ export class CalificacionController {
             res.status(500).json({ error: "Error al obtener testimonios destacados", details: (error as Error).message });
         }
     }
+
+    static async getTestimonyRatingStats(req: Request, res: Response) {
+        try {
+            if (!req.params.id) {
+                return res.status(400).json({ error: 'ID de testimonio no proporcionado' });
+            }
+            const id_testimonio = parseInt(req.params.id);
+            const stats = await CalificacionModel.getTestimonyRatingStats(id_testimonio);
+            res.json(stats);
+        } catch (error) {
+            console.error('Error en getTestimonyRatingStats:', error);
+            res.status(500).json({
+                error: 'Error al obtener estadísticas de calificación',
+                details: error instanceof Error ? error.message : 'Error desconocido'
+            });
+        }
+    }
 }

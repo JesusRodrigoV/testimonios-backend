@@ -377,7 +377,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         id_rol: user.id_rol,
       },
       config.jwtSecret,
-      { expiresIn: "1h" },
+      { expiresIn: "1d" },
     );
 
     const { token: refresh_tokens } = await createRefreshToken(

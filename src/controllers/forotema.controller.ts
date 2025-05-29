@@ -47,19 +47,16 @@ export class ForoTemaController {
       const user = req.user as CustomJwtPayload;
       const { titulo, descripcion, id_evento, id_testimonio } = req.body;
 
-      // Validaciones básicas
       if (!titulo || !descripcion) {
         return res.status(400).json({ error: 'Título y descripción son requeridos' });
       }
 
-      // Validar que al menos uno de los dos (testimonio o evento) esté presente
       if (!id_testimonio && !id_evento) {
         return res.status(400).json({ 
           error: 'Debe proporcionar al menos un testimonio o un evento histórico' 
         });
       }
 
-      // Validar que el testimonio exista si se proporciona
       if (id_testimonio) {
         const testimonio = await prisma.testimonios.findUnique({
           where: { id_testimonio }
@@ -69,7 +66,6 @@ export class ForoTemaController {
         }
       }
 
-      // Validar que el evento exista si se proporciona
       if (id_evento) {
         const evento = await prisma.eventos_historicos.findUnique({
           where: { id_evento }
@@ -109,7 +105,6 @@ export class ForoTemaController {
         return res.status(404).json({ error: 'Tema no encontrado' });
       }
 
-      // Verificar si el usuario es el creador del tema
       if (forotema.creado_por_id_usuario !== user.id_usuario) {
         return res.status(403).json({ 
           error: 'No tienes permiso para modificar este tema. Solo el creador puede modificarlo.' 
@@ -118,14 +113,12 @@ export class ForoTemaController {
 
       const { titulo, descripcion, id_evento, id_testimonio } = req.body;
 
-      // Validar que al menos uno de los dos (testimonio o evento) esté presente
       if (!id_testimonio && !id_evento) {
         return res.status(400).json({ 
           error: 'Debe proporcionar al menos un testimonio o un evento histórico' 
         });
       }
 
-      // Validar que el testimonio exista si se proporciona
       if (id_testimonio) {
         const testimonio = await prisma.testimonios.findUnique({
           where: { id_testimonio }
@@ -135,7 +128,6 @@ export class ForoTemaController {
         }
       }
 
-      // Validar que el evento exista si se proporciona
       if (id_evento) {
         const evento = await prisma.eventos_historicos.findUnique({
           where: { id_evento }
@@ -172,24 +164,18 @@ export class ForoTemaController {
         return res.status(404).json({ error: 'Tema no encontrado' });
       }
 
-      // Verificar si el usuario es el creador del tema
       if (forotema.creado_por_id_usuario !== user.id_usuario) {
         return res.status(403).json({ 
           error: 'No tienes permiso para eliminar este tema. Solo el creador puede eliminarlo.' 
         });
       }
 
-      // Verificar si el tema tiene comentarios
-      const comentarios = await prisma.foro_comentarios.findMany({
+      // Eliminar todos los comentarios asociados al tema
+      await prisma.foro_comentarios.deleteMany({
         where: { id_forotema: id }
       });
 
-      if (comentarios.length > 0) {
-        return res.status(400).json({ 
-          error: 'No se puede eliminar el tema porque tiene comentarios asociados. Primero elimine los comentarios.' 
-        });
-      }
-
+      // Eliminar el tema
       await ForoTemaModel.delete(id);
       res.status(204).send();
     } catch (error) {

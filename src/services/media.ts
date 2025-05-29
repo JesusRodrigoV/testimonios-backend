@@ -766,26 +766,64 @@ export const testimonyService = {
     }
 
     try {
+      const foroTemas = await prisma.foro_temas.findMany({
+        where: { id_testimonio: testimonyId },
+        select: { id_forotema: true }
+      });
+
+      const foroTemaIds = foroTemas.map(tema => tema.id_forotema);
+
+      await prisma.$transaction([
+        prisma.calificaciones.deleteMany({
+          where: { id_testimonio: testimonyId }
+        }),
+        prisma.testimonios_etiquetas.deleteMany({
+          where: { id_testimonio: testimonyId }
+        }),
+        prisma.testimonios_categorias.deleteMany({
+          where: { id_testimonio: testimonyId }
+        }),
+        prisma.testimonios_eventos.deleteMany({
+          where: { id_testimonio: testimonyId }
+        }),
+        prisma.historial_testimonios.deleteMany({
+          where: { id_testimonio: testimonyId }
+        }),
+        prisma.permisos.deleteMany({
+          where: { id_testimonio: testimonyId }
+        }),
+        prisma.colecciones_testimonios.deleteMany({
+          where: { id_testimonio: testimonyId }
+        }),
+        prisma.comentarios.deleteMany({
+          where: { id_testimonio: testimonyId }
+        }),
+        prisma.transcripciones.deleteMany({
+          where: { id_testimonio: testimonyId }
+        }),
+        prisma.notificaciones.deleteMany({
+          where: { id_testimonio: testimonyId }
+        }),
+        prisma.solicitudes_acceso.deleteMany({
+          where: { id_testimonio: testimonyId }
+        }),
+        prisma.foro_comentarios.deleteMany({
+          where: { id_forotema: { in: foroTemaIds } }
+        }),
+        prisma.foro_temas.deleteMany({
+          where: { id_testimonio: testimonyId }
+        })
+      ]);
+
       if (!testimony.url_medio) {
         throw new Error("El testimonio no tiene una URL de medio válida");
       }
+
       const publicId = testimony.url_medio
         .split("/")
         .slice(-1)[0]
         .split(".")[0];
       await deleteMedia(`legado_bolivia/testimonies/${publicId}`);
-
-      await prisma.historial_testimonios.create({
-        data: {
-          version:
-            (await prisma.historial_testimonios.count({
-              where: { id_testimonio: testimonyId },
-            })) + 1,
-          cambios: { tipo: "ELIMINACION", detalles: "Testimonio eliminado" },
-          id_testimonio: testimonyId,
-          editor_id_usuario: userId,
-        },
-      });
 
       await prisma.testimonios.delete({
         where: { id_testimonio: testimonyId },

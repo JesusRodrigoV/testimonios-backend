@@ -6,6 +6,7 @@ import { authenticateToken } from '@app/middleware/authentication';
 export const calificacionRouter = express.Router();
 
 calificacionRouter.get('/top-rated', CalificacionController.getTopRated as RequestHandler);
+calificacionRouter.get('/stats/:id', CalificacionController.getTestimonyRatingStats as RequestHandler);
 calificacionRouter.get('/', authenticateToken,  CalificacionController.getAll as RequestHandler);
 calificacionRouter.get('/:id', authenticateToken, CalificacionController.getById as RequestHandler);
 calificacionRouter.post('/', authenticateToken, CalificacionController.create as RequestHandler);

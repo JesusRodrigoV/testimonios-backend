@@ -122,4 +122,23 @@ export class CalificacionModel {
 
     return result.slice(0, limit);
   }
+
+  static async getTestimonyRatingStats(id_testimonio: number) {
+    const stats = await prisma.calificaciones.aggregate({
+      where: {
+        id_testimonio
+      },
+      _avg: {
+        puntuacion: true
+      },
+      _count: {
+        id_calificacion: true
+      }
+    });
+
+    return {
+      averageRating: stats._avg.puntuacion || 0,
+      totalRatings: stats._count.id_calificacion
+    };
+  }
 }

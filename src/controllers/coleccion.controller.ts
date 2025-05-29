@@ -6,13 +6,8 @@ import prisma from 'src/lib/prisma';
 export class ColeccionController {
     static async getAll(req: Request, res: Response) {
         try {
-            if (req.user?.id_rol === 1) {
-                const colecciones = await ColeccionModel.findAll();
-                return res.json(colecciones);
-            } else { 
-                const colecciones = await ColeccionModel.findByUserId(req.user!.id_usuario);
-                return res.json(colecciones);
-            }
+            const colecciones = await ColeccionModel.findByUserId(req.user!.id_usuario);
+            return res.json(colecciones);
         } catch (error) {
             res.status(500).json({ error: 'Error al obtener las colecciones' });
         }
@@ -30,7 +25,7 @@ export class ColeccionController {
                 return res.status(404).json({ error: 'Coleccion no encontrada' });
             }
 
-            if (req.user?.id_rol !== Rol.ADMIN && coleccion.id_usuario !== req.user!.id_usuario) { // si no es admin, solo el creador de la colección puede verla
+            if (coleccion.id_usuario !== req.user!.id_usuario) {
                 return res.status(403).json({ error: 'No tiene permiso para ver esta colección' });
             }
 

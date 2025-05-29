@@ -17,7 +17,7 @@ import {
   createRefreshToken,
   revokeRefreshToken,
 } from "../models";
-import { safeParse } from "valibot";
+import { partial, safeParse } from "valibot";
 import { sign, verify } from "jsonwebtoken";
 import config from "config";
 import { send2FASetupEmail, sendPasswordResetEmail } from "@app/lib/email";
@@ -158,10 +158,7 @@ export const adminGetUsers = async (
   }
 };
 
-export const adminPutUsers = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const adminPutUsers = async (req: Request, res: Response): Promise<void> => {
   const userIdParam = req.params.id;
   if (!userIdParam) {
     res.status(400).json({ message: "ID de usuario requerido" });
@@ -172,40 +169,45 @@ export const adminPutUsers = async (
     res.status(400).json({ message: "ID de usuario inválido" });
     return;
   }
-  const { email, nombre, biografia, id_rol, profile_image } = req.body;
+
+  const result = safeParse(partial(userSchema), req.body);
+  if (!result.success) {
+    res.status(400).json({
+      message: "Datos inválidos",
+      errors: result.issues,
+    });
+    return;
+  }
 
   try {
+    const updateData = {
+      ...result.output,
+      id_rol: req.body.id_rol,
+      profile_image: req.body.profile_image,
+    };
+
     const updatedUser = await prisma.usuarios.update({
       where: { id_usuario: userId },
-      data: {
-        email,
-        nombre,
-        biografia,
-        id_rol,
-        profile_image,
-      },
+      data: updateData,
       select: {
         id_usuario: true,
         email: true,
         nombre: true,
         biografia: true,
         id_rol: true,
-        last_login: true,
+        profile_image: true,
         two_factor_enabled: true,
       },
     });
     res.json(updatedUser);
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.includes("Record to update not found")
-    ) {
+    if (error instanceof Error && error.message.includes("Record to update not found")) {
       res.status(404).json({ message: "Usuario no encontrado" });
       return;
     }
     res.status(500).json({
-      message: "Error updating user",
-      error: error instanceof Error ? error.message : "Unknown error",
+      message: "Error al actualizar usuario",
+      error: error instanceof Error ? error.message : "Error desconocido",
     });
   }
 };
@@ -257,6 +259,54 @@ export const adminDeleteUsers = async (
     res.status(500).json({
       message: "Error deleting user",
       error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
+export const updateProfile = async (req: Request, res: Response): Promise<void> => {
+  const userId = req.user?.id_usuario;
+  if (!userId) {
+    res.status(401).json({ message: "No autorizado" });
+    return;
+  }
+
+  const result = safeParse(partial(userSchema), req.body);
+  if (!result.success) {
+    res.status(400).json({
+      message: "Datos inválidos",
+      errors: result.issues,
+    });
+    return;
+  }
+
+  try {
+    const updateData = {
+      ...result.output,
+      profile_image: req.body.profile_image,
+    };
+
+    const updatedUser = await prisma.usuarios.update({
+      where: { id_usuario: userId },
+      data: updateData,
+      select: {
+        id_usuario: true,
+        email: true,
+        nombre: true,
+        biografia: true,
+        id_rol: true,
+        profile_image: true,
+        two_factor_enabled: true,
+      },
+    });
+    res.json(updatedUser);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("Record to update not found")) {
+      res.status(404).json({ message: "Usuario no encontrado" });
+      return;
+    }
+    res.status(500).json({
+      message: "Error al actualizar perfil",
+      error: error instanceof Error ? error.message : "Error desconocido",
     });
   }
 };

@@ -4,7 +4,6 @@ import { Rol } from "@app/models";
 import { authorizeRoles } from "@app/middleware/authorization";
 import {
   allow2FAVerification,
-  authenticateRefreshToken,
   authenticateToken,
 } from "@app/middleware/authentication";
 import { logActivity } from "@app/middleware/activityLog";
@@ -22,6 +21,7 @@ import {
   refresh,
   reset_password,
   setup2FA,
+  updateProfile,
   verify2FA,
 } from "@app/controllers/auth.controller";
 
@@ -43,11 +43,16 @@ authRouter.get(
   authorizeRoles(Rol.ADMIN),
   adminGetUsers,
 );
-authRouter.put(
+authRouter.patch(
   "/users/:id",
   authenticateToken,
   authorizeRoles(Rol.ADMIN),
   adminPutUsers,
+);
+authRouter.patch(
+  "/profile",
+  authenticateToken,
+  updateProfile,
 );
 authRouter.delete(
   "/users/:id",

@@ -233,17 +233,14 @@ export const adminDeleteUsers = async (
       return;
     }
 
-    // Primero eliminar los registros relacionados en la tabla logs
     await prisma.logs.deleteMany({
       where: { id_usuario: userId }
     });
 
-    // Eliminar las colecciones del usuario
     await prisma.colecciones.deleteMany({
       where: { id_usuario: userId }
     });
 
-    // Luego eliminar el usuario
     await prisma.usuarios.delete({
       where: { id_usuario: userId },
     });

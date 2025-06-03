@@ -44,6 +44,7 @@ export const authProfile = async (
         biografia: true,
         id_rol: true,
         two_factor_enabled: true,
+        profile_image: true
       },
     });
 
@@ -59,6 +60,7 @@ export const authProfile = async (
       biografia: user.biografia,
       role: user.id_rol,
       two_factor_enabled: user.two_factor_enabled,
+      profile_image: user.profile_image
     });
   } catch (error) {
     res.status(500).json({
@@ -147,6 +149,7 @@ export const adminGetUsers = async (
         id_rol: true,
         last_login: true,
         two_factor_enabled: true,
+        profile_image: true,
       },
     });
     res.json(users);
@@ -446,6 +449,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         role: user.id_rol,
         nombre: user.nombre,
         biografia: user.biografia,
+        profile_image: user.profile_image
       },
     });
   } catch (error) {

@@ -404,8 +404,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     if (
-      [Rol.ADMIN, Rol.CURATOR].includes(user.id_rol) &&
-      user.two_factor_enabled
+      ([Rol.ADMIN, Rol.CURATOR].includes(user.id_rol) &&
+      user.two_factor_enabled) || user.two_factor_enabled
     ) {
       res.status(202).json({
         message: "Requiere verificación 2FA",
@@ -538,12 +538,23 @@ export const setup2FA = async (req: Request, res: Response): Promise<void> => {
       await send2FASetupEmail(user.email, secret, qrCode);
     }
 
+    const tempToken = sign(
+      { id_usuario: userId, setupMode: true },
+      config.jwtSecret,
+      { expiresIn: "15m" }
+    );
+
+    console.log("Generated tempToken in setup2FA:", tempToken);
+    console.log("Decoded tempToken payload:", verify(tempToken, config.jwtSecret));
+
     res.json({
       message: "2FA configurado correctamente",
       secret,
       qrCode,
+      tempToken,
     });
   } catch (error) {
+    console.error("Error in setup2FA:", error);
     res.status(500).json({
       message: "Error al configurar 2FA",
       error: error instanceof Error ? error.message : "Unknown error",

@@ -66,7 +66,6 @@ authRouter.post("/reset-password", reset_password);
 authRouter.post(
   "/setup-2fa",
   authenticateToken,
-  authorizeRoles(Rol.ADMIN, Rol.CURATOR),
   setup2FA,
 );
 authRouter.post("/verify-2fa", allow2FAVerification, verify2FA);

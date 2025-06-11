@@ -28,6 +28,7 @@ testimoniosRouter.get("/map/data", TestimonyController.getMapData as RequestHand
 testimoniosRouter.get("/categories", TestimonyController.getAllCategories as RequestHandler);
 testimoniosRouter.get("/media-types", authenticateToken, TestimonyController.getAllMediaTypes as RequestHandler);
 testimoniosRouter.get("/statuses", authenticateToken, TestimonyController.getAllStatuses as RequestHandler);
+testimoniosRouter.get("/my-uploads/count", authenticateToken, TestimonyController.getCountByUserId as RequestHandler);
 testimoniosRouter.get("/my-uploads", authenticateToken, TestimonyController.getByUserId as RequestHandler);
 testimoniosRouter.get("/", authenticateToken, TestimonyController.search as RequestHandler);
 testimoniosRouter.get("/:id", authenticateToken, TestimonyController.getById as RequestHandler);

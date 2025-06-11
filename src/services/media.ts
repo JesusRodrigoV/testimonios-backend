@@ -99,7 +99,7 @@ export const testimonyService = {
     // Crear notificaciones para administradores y curadores
     await NotificacionModel.notificarNuevoTestimonio(
       testimony.id_testimonio,
-      userId,
+      userId
     );
 
     if (validatedData.tags?.length) {
@@ -215,14 +215,14 @@ export const testimonyService = {
 
     const ratingStats = await prisma.calificaciones.aggregate({
       where: {
-        id_testimonio: id
+        id_testimonio: id,
       },
       _avg: {
-        puntuacion: true
+        puntuacion: true,
       },
       _count: {
-        id_calificacion: true
-      }
+        id_calificacion: true,
+      },
     });
 
     return {
@@ -240,14 +240,14 @@ export const testimonyService = {
       format: testimony.medio.nombre,
       author: testimony.usuarios_testimonios_subido_porTousuarios.nombre,
       categories: testimony.testimonios_categorias.map(
-        (tc) => tc.categorias.nombre,
+        (tc) => tc.categorias.nombre
       ),
       tags: testimony.testimonios_etiquetas.map((te) => te.etiquetas.nombre),
       event: testimony.testimonios_eventos[0]?.eventos_historicos?.nombre,
       rating: {
         average: ratingStats._avg.puntuacion || 0,
-        total: ratingStats._count.id_calificacion
-      }
+        total: ratingStats._count.id_calificacion,
+      },
     };
   },
 
@@ -261,53 +261,64 @@ export const testimonyService = {
     return count;
   },
 
- getTestimonyByUserId: async (userId: number) => {
-  const testimonies = await prisma.testimonios.findMany({
-    where: { subido_por: userId },
-    select: {
-      id_testimonio: true,
-      titulo: true,
-      descripcion: true,
-      contenido_texto: true,
-      url_medio: true,
-      duracion: true,
-      latitud: true,
-      longitud: true,
-      created_at: true,
-      updated_at: true,
-      estado: { select: { nombre: true } },
-      medio: { select: { nombre: true } },
-      testimonios_categorias: {
-        include: { categorias: { select: { nombre: true } } },
+  getTestimonyByUserId: async (userId: number) => {
+    const testimonies = await prisma.testimonios.findMany({
+      where: { subido_por: userId },
+      select: {
+        id_testimonio: true,
+        titulo: true,
+        descripcion: true,
+        contenido_texto: true,
+        url_medio: true,
+        duracion: true,
+        latitud: true,
+        longitud: true,
+        created_at: true,
+        updated_at: true,
+        estado: { select: { nombre: true } },
+        medio: { select: { nombre: true } },
+        testimonios_categorias: {
+          include: { categorias: { select: { nombre: true } } },
+        },
+        testimonios_etiquetas: {
+          include: { etiquetas: { select: { nombre: true } } },
+        },
+        testimonios_eventos: {
+          include: { eventos_historicos: { select: { nombre: true } } },
+        },
+        usuarios_testimonios_subido_porTousuarios: { select: { nombre: true } },
       },
-      testimonios_etiquetas: {
-        include: { etiquetas: { select: { nombre: true } } },
-      },
-      testimonios_eventos: {
-        include: { eventos_historicos: { select: { nombre: true } } },
-      },
-      usuarios_testimonios_subido_porTousuarios: { select: { nombre: true } },
-    },
-  });
+    });
 
-  return testimonies.map((t) => ({
-    id: t.id_testimonio,
-    title: t.titulo,
-    description: t.descripcion,
-    content: t.contenido_texto,
-    url: t.url_medio,
-    duration: t.duracion,
-    latitude: t.latitud ? Number(t.latitud) : null,
-    longitude: t.longitud ? Number(t.longitud) : null,
-    createdAt: t.created_at,
-    status: t.estado.nombre,
-    format: t.medio.nombre,
-    author: t.usuarios_testimonios_subido_porTousuarios.nombre,
-    categories: t.testimonios_categorias.map((tc) => tc.categorias.nombre),
-    tags: t.testimonios_etiquetas.map((te) => te.etiquetas.nombre),
-    event: t.testimonios_eventos[0]?.eventos_historicos?.nombre || null
-  }));
-},
+    return testimonies.map((t) => ({
+      id: t.id_testimonio,
+      title: t.titulo,
+      description: t.descripcion,
+      content: t.contenido_texto,
+      url: t.url_medio,
+      duration: t.duracion,
+      latitude: t.latitud ? Number(t.latitud) : null,
+      longitude: t.longitud ? Number(t.longitud) : null,
+      createdAt: t.created_at,
+      status: t.estado.nombre,
+      format: t.medio.nombre,
+      author: t.usuarios_testimonios_subido_porTousuarios.nombre,
+      categories: t.testimonios_categorias.map((tc) => tc.categorias.nombre),
+      tags: t.testimonios_etiquetas.map((te) => te.etiquetas.nombre),
+      event: t.testimonios_eventos[0]?.eventos_historicos?.nombre || null,
+    }));
+  },
+
+  getTestimonyCountByUserId: async (userId: number) => {
+    const count = await prisma.testimonios.count({
+      where: {
+        id_estado: 2,
+        subido_por: userId,
+      },
+    });
+
+    return count;
+  },
 
   searchTestimonies: async (
     params: {
@@ -324,7 +335,7 @@ export const testimonyService = {
       status?: string;
     },
     userId: number,
-    userRole: number,
+    userRole: number
   ) => {
     console.log(
       "Parámetros de búsqueda:",
@@ -332,7 +343,7 @@ export const testimonyService = {
       "Usuario ID:",
       userId,
       "Rol:",
-      userRole,
+      userRole
     );
 
     const permissions =
@@ -387,21 +398,21 @@ export const testimonyService = {
       }[params.status];
       if (!statusId || !permissions.canViewStatuses.includes(params.status)) {
         throw new Error(
-          "No tienes permiso para ver testimonios con este estado",
+          "No tienes permiso para ver testimonios con este estado"
         );
       }
       where.id_estado = statusId;
     } else {
       where.id_estado = {
         in: permissions.canViewStatuses.map((status) =>
-          status === "Pendiente" ? 1 : status === "Aprobado" ? 2 : 3,
+          status === "Pendiente" ? 1 : status === "Aprobado" ? 2 : 3
         ),
       };
     }
 
     // Implementación de paginación
     const page = params.page ?? 1;
-    const limit = params.highlighted ? 3 : (params.limit ?? 5);
+    const limit = params.highlighted ? 3 : params.limit ?? 5;
     const skip = (page - 1) * limit;
 
     console.log("Cláusula where de Prisma:", where);
@@ -467,13 +478,13 @@ export const testimonyService = {
           format: t.medio.nombre,
           author: t.usuarios_testimonios_subido_porTousuarios.nombre,
           categories: t.testimonios_categorias.map(
-            (tc) => tc.categorias.nombre,
+            (tc) => tc.categorias.nombre
           ),
           tags: t.testimonios_etiquetas.map((te) => te.etiquetas.nombre),
           event: t.testimonios_eventos[0]?.eventos_historicos?.nombre,
           favoriteCount,
         };
-      }),
+      })
     );
 
     return {
@@ -488,7 +499,7 @@ export const testimonyService = {
     testimonyId: number,
     userId: number,
     userRole: number,
-    approve: boolean,
+    approve: boolean
   ) => {
     const permissions =
       rolePermissions[userRole as RoleId] || rolePermissions[4];
@@ -523,7 +534,7 @@ export const testimonyService = {
       testimonyId,
       testimony.subido_por,
       updatedTestimony.id_estado,
-      testimony.titulo,
+      testimony.titulo
     );
 
     await prisma.historial_testimonios.create({
@@ -534,7 +545,9 @@ export const testimonyService = {
           })) + 1,
         cambios: {
           tipo: approve ? "APROBACION" : "RECHAZO",
-          detalles: `Testimonio ${approve ? "aprobado" : "rechazado"} por usuario ${userId}`,
+          detalles: `Testimonio ${
+            approve ? "aprobado" : "rechazado"
+          } por usuario ${userId}`,
         },
         id_testimonio: testimonyId,
         editor_id_usuario: userId,
@@ -586,7 +599,8 @@ export const testimonyService = {
     userId: number,
     userRole: number
   ) => {
-    const permissions = rolePermissions[userRole as RoleId] || rolePermissions[4];
+    const permissions =
+      rolePermissions[userRole as RoleId] || rolePermissions[4];
     const testimony = await prisma.testimonios.findUnique({
       where: { id_testimonio: testimonyId },
       select: {
@@ -612,8 +626,14 @@ export const testimonyService = {
     if (data.content) updateData.contenido_texto = data.content;
     if (data.url) updateData.url_medio = data.url;
     if (data.duration !== undefined) updateData.duracion = data.duration;
-    if (data.latitude !== undefined) updateData.latitud = data.latitude ? new Prisma.Decimal(data.latitude) : null;
-    if (data.longitude !== undefined) updateData.longitud = data.longitude ? new Prisma.Decimal(data.longitude) : null;
+    if (data.latitude !== undefined)
+      updateData.latitud = data.latitude
+        ? new Prisma.Decimal(data.latitude)
+        : null;
+    if (data.longitude !== undefined)
+      updateData.longitud = data.longitude
+        ? new Prisma.Decimal(data.longitude)
+        : null;
     if (data.format) {
       const mediaTypeId = data.format === "Audio" ? 1 : 2;
       updateData.medio = { connect: { id_medio: mediaTypeId } };
@@ -626,9 +646,15 @@ export const testimonyService = {
         estado: { select: { nombre: true } },
         medio: { select: { nombre: true } },
         usuarios_testimonios_subido_porTousuarios: { select: { nombre: true } },
-        testimonios_categorias: { include: { categorias: { select: { nombre: true } } } },
-        testimonios_etiquetas: { include: { etiquetas: { select: { nombre: true } } } },
-        testimonios_eventos: { include: { eventos_historicos: { select: { nombre: true } } } },
+        testimonios_categorias: {
+          include: { categorias: { select: { nombre: true } } },
+        },
+        testimonios_etiquetas: {
+          include: { etiquetas: { select: { nombre: true } } },
+        },
+        testimonios_eventos: {
+          include: { eventos_historicos: { select: { nombre: true } } },
+        },
       },
     });
 
@@ -696,7 +722,8 @@ export const testimonyService = {
     if (data.description) changes.push(`Descripción actualizada`);
     if (data.content) changes.push(`Contenido actualizado`);
     if (data.url) changes.push(`URL de medio actualizada`);
-    if (data.duration !== undefined) changes.push(`Duración actualizada a ${data.duration}`);
+    if (data.duration !== undefined)
+      changes.push(`Duración actualizada a ${data.duration}`);
     if (data.latitude !== undefined) changes.push(`Latitud actualizada`);
     if (data.longitude !== undefined) changes.push(`Longitud actualizada`);
     if (data.format) changes.push(`Formato actualizado a ${data.format}`);
@@ -706,9 +733,10 @@ export const testimonyService = {
 
     await prisma.historial_testimonios.create({
       data: {
-        version: (await prisma.historial_testimonios.count({
-          where: { id_testimonio: testimonyId },
-        })) + 1,
+        version:
+          (await prisma.historial_testimonios.count({
+            where: { id_testimonio: testimonyId },
+          })) + 1,
         cambios: {
           tipo: "ACTUALIZACION",
           detalles: changes.join("; ") || "Actualización general",
@@ -732,23 +760,33 @@ export const testimonyService = {
       content: updatedTestimony.contenido_texto,
       url: updatedTestimony.url_medio,
       duration: updatedTestimony.duracion,
-      latitude: updatedTestimony.latitud ? Number(updatedTestimony.latitud) : null,
-      longitude: updatedTestimony.longitud ? Number(updatedTestimony.longitud) : null,
+      latitude: updatedTestimony.latitud
+        ? Number(updatedTestimony.latitud)
+        : null,
+      longitude: updatedTestimony.longitud
+        ? Number(updatedTestimony.longitud)
+        : null,
       createdAt: updatedTestimony.created_at,
       updatedAt: updatedTestimony.updated_at,
       status: updatedTestimony.estado.nombre,
       format: updatedTestimony.medio.nombre,
       author: updatedTestimony.usuarios_testimonios_subido_porTousuarios.nombre,
-      categories: updatedTestimony.testimonios_categorias.map((tc) => tc.categorias.nombre),
-      tags: updatedTestimony.testimonios_etiquetas.map((te) => te.etiquetas.nombre),
-      event: updatedTestimony.testimonios_eventos[0]?.eventos_historicos?.nombre || null,
+      categories: updatedTestimony.testimonios_categorias.map(
+        (tc) => tc.categorias.nombre
+      ),
+      tags: updatedTestimony.testimonios_etiquetas.map(
+        (te) => te.etiquetas.nombre
+      ),
+      event:
+        updatedTestimony.testimonios_eventos[0]?.eventos_historicos?.nombre ||
+        null,
     };
   },
 
   deleteTestimony: async (
     testimonyId: number,
     userId: number,
-    userRole: number,
+    userRole: number
   ) => {
     const permissions =
       rolePermissions[userRole as RoleId] || rolePermissions[4];
@@ -768,51 +806,51 @@ export const testimonyService = {
     try {
       const foroTemas = await prisma.foro_temas.findMany({
         where: { id_testimonio: testimonyId },
-        select: { id_forotema: true }
+        select: { id_forotema: true },
       });
 
-      const foroTemaIds = foroTemas.map(tema => tema.id_forotema);
+      const foroTemaIds = foroTemas.map((tema) => tema.id_forotema);
 
       await prisma.$transaction([
         prisma.calificaciones.deleteMany({
-          where: { id_testimonio: testimonyId }
+          where: { id_testimonio: testimonyId },
         }),
         prisma.testimonios_etiquetas.deleteMany({
-          where: { id_testimonio: testimonyId }
+          where: { id_testimonio: testimonyId },
         }),
         prisma.testimonios_categorias.deleteMany({
-          where: { id_testimonio: testimonyId }
+          where: { id_testimonio: testimonyId },
         }),
         prisma.testimonios_eventos.deleteMany({
-          where: { id_testimonio: testimonyId }
+          where: { id_testimonio: testimonyId },
         }),
         prisma.historial_testimonios.deleteMany({
-          where: { id_testimonio: testimonyId }
+          where: { id_testimonio: testimonyId },
         }),
         prisma.permisos.deleteMany({
-          where: { id_testimonio: testimonyId }
+          where: { id_testimonio: testimonyId },
         }),
         prisma.colecciones_testimonios.deleteMany({
-          where: { id_testimonio: testimonyId }
+          where: { id_testimonio: testimonyId },
         }),
         prisma.comentarios.deleteMany({
-          where: { id_testimonio: testimonyId }
+          where: { id_testimonio: testimonyId },
         }),
         prisma.transcripciones.deleteMany({
-          where: { id_testimonio: testimonyId }
+          where: { id_testimonio: testimonyId },
         }),
         prisma.notificaciones.deleteMany({
-          where: { id_testimonio: testimonyId }
+          where: { id_testimonio: testimonyId },
         }),
         prisma.solicitudes_acceso.deleteMany({
-          where: { id_testimonio: testimonyId }
+          where: { id_testimonio: testimonyId },
         }),
         prisma.foro_comentarios.deleteMany({
-          where: { id_forotema: { in: foroTemaIds } }
+          where: { id_forotema: { in: foroTemaIds } },
         }),
         prisma.foro_temas.deleteMany({
-          where: { id_testimonio: testimonyId }
-        })
+          where: { id_testimonio: testimonyId },
+        }),
       ]);
 
       if (!testimony.url_medio) {
@@ -830,7 +868,9 @@ export const testimonyService = {
       });
     } catch (error) {
       throw new Error(
-        `Error al eliminar testimonio: ${error instanceof Error ? error.message : "Error desconocido"}`,
+        `Error al eliminar testimonio: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`
       );
     }
   },

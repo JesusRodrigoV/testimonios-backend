@@ -16,16 +16,18 @@ import {
   passwordSchema,
   createRefreshToken,
   revokeRefreshToken,
+  updateUserSchema,
 } from "../models";
 import { partial, safeParse } from "valibot";
 import { sign, verify } from "jsonwebtoken";
 import config from "config";
 import { send2FASetupEmail, sendPasswordResetEmail } from "@app/lib/email";
 import prisma from "@app/lib/prisma";
+import { hash } from "crypto";
 
 export const authProfile = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   try {
     const userId = req.user?.id_usuario;
@@ -44,7 +46,7 @@ export const authProfile = async (
         biografia: true,
         id_rol: true,
         two_factor_enabled: true,
-        profile_image: true
+        profile_image: true,
       },
     });
 
@@ -60,7 +62,7 @@ export const authProfile = async (
       biografia: user.biografia,
       role: user.id_rol,
       two_factor_enabled: user.two_factor_enabled,
-      profile_image: user.profile_image
+      profile_image: user.profile_image,
     });
   } catch (error) {
     res.status(500).json({
@@ -72,7 +74,7 @@ export const authProfile = async (
 
 export const authRegister = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   const result = safeParse(userSchema, req.body);
   if (!result.success) {
@@ -107,7 +109,7 @@ export const authRegister = async (
 
 export const adminPostUsers = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   const result = safeParse(userSchema, req.body);
   if (!result.success) {
@@ -137,7 +139,7 @@ export const adminPostUsers = async (
 
 export const adminGetUsers = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   try {
     const users = await prisma.usuarios.findMany({
@@ -161,7 +163,10 @@ export const adminGetUsers = async (
   }
 };
 
-export const adminPutUsers = async (req: Request, res: Response): Promise<void> => {
+export const adminPatchUsers = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const userIdParam = req.params.id;
   if (!userIdParam) {
     res.status(400).json({ message: "ID de usuario requerido" });
@@ -173,7 +178,7 @@ export const adminPutUsers = async (req: Request, res: Response): Promise<void> 
     return;
   }
 
-  const result = safeParse(partial(userSchema), req.body);
+  const result = safeParse(updateUserSchema, req.body);
   if (!result.success) {
     res.status(400).json({
       message: "Datos inválidos",
@@ -183,15 +188,15 @@ export const adminPutUsers = async (req: Request, res: Response): Promise<void> 
   }
 
   try {
-    const updateData = {
-      ...result.output,
-      id_rol: req.body.id_rol,
-      profile_image: req.body.profile_image,
-    };
-
+    const updateData = result.output;
+    
     const updatedUser = await prisma.usuarios.update({
       where: { id_usuario: userId },
-      data: updateData,
+      data: {
+        nombre: updateData.nombre,
+        biografia: updateData.biografia,
+        id_rol: updateData.id_rol,
+      },
       select: {
         id_usuario: true,
         email: true,
@@ -204,7 +209,10 @@ export const adminPutUsers = async (req: Request, res: Response): Promise<void> 
     });
     res.json(updatedUser);
   } catch (error) {
-    if (error instanceof Error && error.message.includes("Record to update not found")) {
+    if (
+      error instanceof Error &&
+      error.message.includes("Record to update not found")
+    ) {
       res.status(404).json({ message: "Usuario no encontrado" });
       return;
     }
@@ -217,7 +225,7 @@ export const adminPutUsers = async (req: Request, res: Response): Promise<void> 
 
 export const adminDeleteUsers = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   const userIdParam = req.params.id;
   if (!userIdParam) {
@@ -237,11 +245,11 @@ export const adminDeleteUsers = async (
     }
 
     await prisma.logs.deleteMany({
-      where: { id_usuario: userId }
+      where: { id_usuario: userId },
     });
 
     await prisma.colecciones.deleteMany({
-      where: { id_usuario: userId }
+      where: { id_usuario: userId },
     });
 
     await prisma.usuarios.delete({
@@ -263,7 +271,10 @@ export const adminDeleteUsers = async (
   }
 };
 
-export const updateProfile = async (req: Request, res: Response): Promise<void> => {
+export const updateProfile = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const userId = req.user?.id_usuario;
   if (!userId) {
     res.status(401).json({ message: "No autorizado" });
@@ -300,7 +311,10 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
     });
     res.json(updatedUser);
   } catch (error) {
-    if (error instanceof Error && error.message.includes("Record to update not found")) {
+    if (
+      error instanceof Error &&
+      error.message.includes("Record to update not found")
+    ) {
       res.status(404).json({ message: "Usuario no encontrado" });
       return;
     }
@@ -311,7 +325,10 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-export const getUserInfo = async (req: Request, res: Response): Promise<void> => {
+export const getUserInfo = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const userIdParam = req.params.id;
   if (!userIdParam) {
     throw new Error("ID de usuario requerido");
@@ -334,10 +351,10 @@ export const getUserInfo = async (req: Request, res: Response): Promise<void> =>
         profile_image: true,
         rol: {
           select: {
-            nombre: true
-          }
-        }
-      }
+            nombre: true,
+          },
+        },
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -345,8 +362,7 @@ export const getUserInfo = async (req: Request, res: Response): Promise<void> =>
       error: error instanceof Error ? error.message : "Error desconocido",
     });
   }
-
-}
+};
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   const result = safeParse(authSchema, req.body);
@@ -381,13 +397,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
           tempToken: sign(
             { id_usuario: user.id_usuario, setupMode: true },
             config.jwtSecret,
-            { expiresIn: "15m" },
+            { expiresIn: "15m" }
           ),
         });
       } else {
         const qrCode = await regenerateQRCode(
           user.two_factor_secret,
-          user.email,
+          user.email
         );
         res.status(202).json({
           message: "Requiere configuración 2FA",
@@ -396,7 +412,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
           tempToken: sign(
             { id_usuario: user.id_usuario, setupMode: true },
             config.jwtSecret,
-            { expiresIn: "15m" },
+            { expiresIn: "15m" }
           ),
         });
       }
@@ -405,7 +421,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     if (
       ([Rol.ADMIN, Rol.CURATOR].includes(user.id_rol) &&
-      user.two_factor_enabled) || user.two_factor_enabled
+        user.two_factor_enabled) ||
+      user.two_factor_enabled
     ) {
       res.status(202).json({
         message: "Requiere verificación 2FA",
@@ -413,7 +430,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         tempToken: sign(
           { id_usuario: user.id_usuario, pending2FA: true },
           config.jwtSecret,
-          { expiresIn: "5m" },
+          { expiresIn: "5m" }
         ),
       });
       return;
@@ -427,12 +444,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         id_rol: user.id_rol,
       },
       config.jwtSecret,
-      { expiresIn: "1d" },
+      { expiresIn: "1d" }
     );
 
-    const { token: refresh_tokens } = await createRefreshToken(
-      user.id_usuario,
-    );
+    const { token: refresh_tokens } = await createRefreshToken(user.id_usuario);
 
     res.cookie("refreshToken", refresh_tokens, {
       httpOnly: true,
@@ -449,7 +464,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         role: user.id_rol,
         nombre: user.nombre,
         biografia: user.biografia,
-        profile_image: user.profile_image
+        profile_image: user.profile_image,
       },
     });
   } catch (error) {
@@ -462,7 +477,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
 export const forgot_password = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   const { email } = req.body;
 
@@ -487,7 +502,7 @@ export const forgot_password = async (
 
 export const reset_password = async (
   req: Request,
-  res: Response,
+  res: Response
 ): Promise<void> => {
   const { token, newPassword } = req.body;
 
@@ -545,7 +560,10 @@ export const setup2FA = async (req: Request, res: Response): Promise<void> => {
     );
 
     console.log("Generated tempToken in setup2FA:", tempToken);
-    console.log("Decoded tempToken payload:", verify(tempToken, config.jwtSecret));
+    console.log(
+      "Decoded tempToken payload:",
+      verify(tempToken, config.jwtSecret)
+    );
 
     res.json({
       message: "2FA configurado correctamente",
@@ -585,12 +603,10 @@ export const verify2FA = async (req: Request, res: Response): Promise<void> => {
         id_rol: user.id_rol,
       },
       config.jwtSecret,
-      { expiresIn: "1h" },
+      { expiresIn: "1h" }
     );
 
-    const { token: refreshToken } = await createRefreshToken(
-      user.id_usuario,
-    );
+    const { token: refreshToken } = await createRefreshToken(user.id_usuario);
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
@@ -684,13 +700,13 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
         id_rol: user.id_rol,
       },
       config.jwtSecret,
-      { expiresIn: "1h" },
+      { expiresIn: "1h" }
     );
 
     await revokeRefreshToken(refreshToken);
     const deviceInfo = req.headers["user-agent"] || "unknown";
     const { token: newRefreshToken } = await createRefreshToken(
-      user.id_usuario,
+      user.id_usuario
     );
 
     res.cookie("refreshToken", newRefreshToken, {

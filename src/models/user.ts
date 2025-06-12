@@ -7,7 +7,9 @@ import {
   maxLength,
   minLength,
   nullable,
+  number,
   object,
+  optional,
   pipe,
   string,
   type InferInput,
@@ -40,6 +42,15 @@ export const userSchema = object({
   biografia: biografiaSchema,
 });
 
+export const updateUserSchema = object({
+  id_usuario: pipe(number()),
+  nombre: optional(nombreSchema),
+  email: optional(emailSchema),
+  id_rol: optional(pipe(number())),
+  biografia: optional(biografiaSchema),
+  profile_image: optional(string()),
+});
+
 export const authSchema = object({
   email: emailSchema,
   password: passwordSchema,
@@ -59,6 +70,7 @@ export enum Rol {
 }
 
 export type UserInput = InferInput<typeof userSchema>;
+export type UpdateUserInput = InferInput<typeof updateUserSchema>;
 
 export type User = usuarios & {
   rol?: rol;

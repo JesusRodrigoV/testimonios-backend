@@ -10,8 +10,8 @@ import { logActivity } from "@app/middleware/activityLog";
 import {
   adminDeleteUsers,
   adminGetUsers,
+  adminPatchUsers,
   adminPostUsers,
-  adminPutUsers,
   authProfile,
   authRegister,
   forgot_password,
@@ -47,7 +47,7 @@ authRouter.patch(
   "/users/:id",
   authenticateToken,
   authorizeRoles(Rol.ADMIN),
-  adminPutUsers,
+  adminPatchUsers,
 );
 authRouter.patch(
   "/profile",

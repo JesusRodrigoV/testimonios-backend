@@ -1,0 +1,11 @@
+telemetry = false
+logLevel = "debug"
+
+[test]
+root = "./tests"
+preload = ["./tests/setup.ts"]
+coverage = true
+coverageThreshold = 0.1
+coverageReporter = ["text", "lcov"]
+coverageDir = "./coverage"
+coverageSkipTestFiles = true

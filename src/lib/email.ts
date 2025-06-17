@@ -4,18 +4,18 @@ import nodemailer from "nodemailer";
 const transporter = nodemailer.createTransport({
   host: config.emailHost,
   port: config.emailPort,
-  secure: config.emailPort === 465, // true para puerto 465, false para otros puertos
+  secure: config.emailPort === 465, 
   auth: {
     user: config.emailUser,
     pass: config.emailPassword,
   },
   tls: {
-    rejectUnauthorized: true, // Cambiamos a true para mayor seguridad
+    rejectUnauthorized: true,
   },
-  pool: true, // Usar pool de conexiones
+  pool: true,
   maxConnections: 5,
   maxMessages: 100,
-  rateLimit: 20, // Límite de emails por segundo
+  rateLimit: 20,
 });
 
 export const sendEmail = async (to: string, subject: string, html: string) => {

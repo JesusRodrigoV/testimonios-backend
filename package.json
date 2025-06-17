@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "start": "bun run index.ts",
-    "dev": "bun --watch index.ts"
+    "dev": "bun --watch index.ts",
+    "test": "bun test --env-file=.env.test"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",

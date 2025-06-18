@@ -10,3 +10,4 @@ export * from "./forotema.route";
 export * from "./notificacion.route";
 export * from "./testimonios.route";
 export * from "./transcripcion.route";
+export * from"./swagger.route";

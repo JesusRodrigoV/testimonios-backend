@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import config from "./config";
 import * as routers from '@app/routes';
+import path from 'path';
 
 const app = express();
 
@@ -13,6 +14,8 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.use("/auth", routers.authRouter);
 app.use("/media", routers.testimoniosRouter);
 app.use("/categories", routers.categoriaRouter);
@@ -25,6 +28,7 @@ app.use("/transcription", routers.transcripcionRouter);
 app.use("/score", routers.calificacionRouter);
 app.use("/forumtopics", routers.forotemaRouter);
 app.use("/forumcomments", routers.forocomentarioRouter);
+app.use("/api-docs", routers.swaggerRouter);
 
 app.use(
   (

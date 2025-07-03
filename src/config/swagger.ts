@@ -6,7 +6,7 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'API de Testimonios',
+      title: 'API de Sistema de archivo de testimonios del bicentenario',
       version: '1.0.0',
       description: 'Documentación de la API de Testimonios',
     },
@@ -29,7 +29,7 @@ const options: swaggerJsdoc.Options = {
       bearerAuth: [],
     }],
   },
-  apis: ['./src/routes/*.ts'], // archivos que contienen las anotaciones
+  apis: ['./src/routes/*.ts'],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);

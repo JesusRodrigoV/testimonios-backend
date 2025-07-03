@@ -1,21 +1,5 @@
-interface Comment {
-  id_forocoment: number;
-  contenido: string;
-  fecha_creacion: Date;
-  creado_por_id_usuario: number;
-  id_forotema: number;
-  parent_id: number | null;
-  usuarios: {
-    id_usuario: number;
-    nombre: string;
-    email: string;
-    profile_image: string | null;
-  };
-}
+import type { Comment, CommentWithChildren } from "@app/models/comentario.model";
 
-interface CommentWithChildren extends Comment {
-  children: CommentWithChildren[];
-}
 
 export function buildCommentTree(comments: Comment[]): CommentWithChildren[] {
   const commentMap = new Map<number, CommentWithChildren>();

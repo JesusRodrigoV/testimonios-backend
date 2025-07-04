@@ -29,7 +29,7 @@ export const checkDownloadPermission = async (
   );
 
   if (!hasPermission) {
-    return res.status(403).json({ error: "No tiene permiso para descargar" });
+    return res.status(403).json({ message: "No tiene permiso para descargar" });
   }
 
   next();

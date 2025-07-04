@@ -11,6 +11,10 @@ export interface CustomJwtPayload extends JWT {
   setupMode?: boolean;
 }
 
+const verifyToken = (token: string): CustomJwtPayload => {
+  return verify(token, config.jwtSecret) as CustomJwtPayload;
+};
+
 export const allow2FAVerification = (
   req: Request,
   res: Response,
@@ -26,15 +30,12 @@ export const allow2FAVerification = (
   }
 
   try {
-    const decoded = verify(token, config.jwtSecret) as CustomJwtPayload;
+    const decoded = verifyToken(token);
     console.log("Decoded token in allow2FAVerification:", decoded);
     console.log("Token received:", token);
     if (!decoded.pending2FA && !decoded.setupMode) {
-      console.error(
-        "Token rejected: Missing pending2FA or setupMode",
-        decoded
-      );
-      res.status(403).json({ message: "Token inválido para verificación 2FA" });
+      console.error("Token rejected: Missing pending2FA or setupMode", decoded);
+      res.status(403).json({ message: "Autenticación adicional requerida" });
       return;
     }
 
@@ -61,13 +62,13 @@ export const authenticateToken = async (
   }
 
   try {
-    const decoded = verify(token, config.jwtSecret) as CustomJwtPayload;
+    const decoded = verifyToken(token);
 
     if (decoded.setupMode) {
       if (!req.path.includes("/verify-2fa")) {
         res
           .status(403)
-          .json({ message: "Debe completar la configuración 2FA" });
+          .json({ message: "Acción no permitida en estado actual" });
         return;
       }
       req.user = decoded;
@@ -77,7 +78,7 @@ export const authenticateToken = async (
 
     if (decoded.pending2FA) {
       if (!req.path.includes("/verify-2fa")) {
-        res.status(403).json({ message: "Debe completar la verificación 2FA" });
+        res.status(403).json({ message: "Acción no permitida en estado actual" });
         return;
       }
       req.user = decoded;
@@ -115,7 +116,7 @@ export const authenticateRefreshToken = async (
   }
 
   try {
-    const decoded = verify(refreshToken, config.jwtSecret) as CustomJwtPayload;
+    const decoded = verifyToken(refreshToken);
     const refreshTokenRecord = await prisma.refresh_tokens.findFirst({
       where: {
         token: refreshToken,

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Código de Verificación - Sistema de Archivos del Bicentenario</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+      :root {
+        --primary-color: #2e7d32;
+        --primary-light: #81c784;
+        --primary-dark: #1b5e20;
+        --accent-color: #69f0ae;
+        --text-primary: #212121;
+        --text-secondary: #757575;
+        --divider-color: #bdbdbd;
+        --background: #f5f5f5;
+        --card-background: #ffffff;
+        --error-color: #c62828;
+        --warning-color: #f9a825;
+      }
+
+      body {
+        font-family: "Roboto", "Segoe UI", Arial, sans-serif;
+        line-height: 1.6;
+        color: var(--text-primary);
+        margin: 0;
+        padding: 0;
+        background-color: var(--background);
+      }
+
+      .email-container {
+        max-width: 600px;
+        margin: 30px auto;
+        padding: 0;
+        background-color: var(--card-background);
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .email-header {
+        background-color: var(--primary-color);
+        padding: 24px 30px;
+        text-align: center;
+        color: white;
+      }
+
+      .logo {
+        max-height: 64px;
+        margin-bottom: 16px;
+      }
+
+      .email-title {
+        font-size: 24px;
+        font-weight: 500;
+        margin: 0;
+        color: white;
+        letter-spacing: 0.5px;
+      }
+
+      .email-subtitle {
+        font-size: 16px;
+        opacity: 0.9;
+        margin-top: 8px;
+        font-weight: 400;
+      }
+
+      .email-content {
+        padding: 32px;
+      }
+
+      .code-section {
+        margin: 32px 0;
+        text-align: center;
+      }
+
+      .code-title {
+        font-size: 18px;
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: 24px;
+      }
+
+      .code-container {
+        display: inline-block;
+        padding: 24px;
+        background-color: #e8f5e9;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      }
+
+      .code-value {
+        font-family: "Roboto Mono", monospace;
+        font-size: 32px;
+        font-weight: 600;
+        letter-spacing: 4px;
+        color: var(--primary-dark);
+        padding: 12px 24px;
+        background-color: white;
+        border-radius: 4px;
+        border: 1px solid var(--primary-light);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+
+      .code-instructions {
+        margin-top: 24px;
+        font-size: 14px;
+        color: var(--text-secondary);
+        line-height: 1.7;
+      }
+
+      .security-section {
+        margin: 40px 0 24px 0;
+        padding: 20px;
+        background-color: #fff8e1;
+        border-radius: 8px;
+        border-left: 4px solid var(--warning-color);
+      }
+
+      .security-title {
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+        color: var(--warning-color);
+        margin-bottom: 12px;
+      }
+
+      .security-title .material-icons {
+        margin-right: 8px;
+        font-size: 20px;
+      }
+
+      .security-text {
+        font-size: 14px;
+        color: var(--text-secondary);
+        line-height: 1.7;
+      }
+
+      .email-footer {
+        margin-top: 40px;
+        padding-top: 24px;
+        border-top: 1px solid var(--divider-color);
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 13px;
+      }
+
+      .action-button {
+        display: inline-block;
+        margin-top: 24px;
+        padding: 12px 24px;
+        background-color: var(--primary-color);
+        color: white;
+        text-decoration: none;
+        font-weight: 500;
+        border-radius: 25px;
+        font-size: 15px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .action-button:hover {
+        background-color: var(--primary-dark);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+      }
+
+      .bold-text {
+        font-weight: 500;
+        color: var(--text-primary);
+      }
+
+      .primary-text {
+        color: var(--primary-color);
+      }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <img src="../assets/images/logo-Sfondo.png" alt="Logo Sistema de Archivos del Bicentenario" class="logo">
+            <h1 class="email-title">Código de Verificación</h1>
+            <div class="email-subtitle">Sistema de Archivos de Testimonios del Bicentenario</div>
+        </div>
+        
+        <div class="email-content">
+            <p style="text-align: center; font-size: 16px; color: var(--text-secondary);">
+                Hemos generado un código temporal para acceder a tu cuenta. Utilízalo para completar tu autenticación.
+            </p>
+            
+            <div class="code-section">
+                <div class="code-title">Tu código de verificación es:</div>
+                <div class="code-container">
+                    <div class="code-value">${code}</div>
+                </div>
+                <div class="code-instructions">
+                    Este código es válido por <span class="bold-text">15 minutos</span>.<br>
+                    No lo compartas con nadie. El equipo del Bicentenario nunca te pedirá esta información.
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="#" class="action-button">
+                    <i class="material-icons" style="vertical-align: middle; font-size: 18px;">lock_open</i>
+                    Acceder a mi cuenta
+                </a>
+            </div>
+            
+            <div class="security-section">
+                <div class="security-title">
+                    <i class="material-icons">security</i>
+                    Importante: Seguridad de tu cuenta
+                </div>
+                <p class="security-text">
+                    Si no solicitaste este código, por favor cambia tu contraseña inmediatamente. Proteger tu información es nuestra prioridad.
+                </p>
+            </div>
+            
+            <div class="email-footer">
+                <p>Sistema de Archivos de Testimonios del Bicentenario &copy; 2025</p>
+                <p>Este es un mensaje automático, por favor no respondas a este correo.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

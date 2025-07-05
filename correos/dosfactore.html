@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración de Seguridad - Sistema de Archivos del Bicentenario</title>
+    <style>
+      :root {
+        --primary-color: #2e7d32;
+        --primary-light: #81c784;
+        --primary-dark: #1b5e20;
+        --accent-color: #69f0ae;
+        --text-primary: #212121;
+        --text-secondary: #757575;
+        --divider-color: #bdbdbd;
+        --background: #f5f7fa;
+        --card-background: #ffffff;
+        --error-color: #c62828;
+        --warning-color: #f9a825;
+      }
+
+      body {
+        font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        line-height: 1.6;
+        color: var(--text-primary);
+        margin: 0;
+        padding: 0;
+        background-color: var(--background);
+      }
+
+      .email-container {
+        max-width: 640px;
+        margin: 30px auto;
+        padding: 0;
+        background-color: var(--card-background);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .email-header {
+        background-color: var(--primary-color);
+        padding: 25px 30px;
+        text-align: center;
+        color: white;
+      }
+
+      .logo {
+        max-height: 60px;
+        margin-bottom: 15px;
+      }
+
+      .email-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin: 0;
+        color: #ffffff;
+      }
+
+      .email-subtitle {
+        font-size: 16px;
+        opacity: 0.9;
+        margin-top: 8px;
+        font-weight: 400;
+      }
+
+      .email-content {
+        padding: 30px;
+      }
+
+      .intro-text {
+        margin-bottom: 25px;
+        font-size: 16px;
+        color: var(--text-secondary);
+      }
+
+      .section-title {
+        color: var(--text-primary);
+        font-size: 18px;
+        font-weight: 600;
+        margin: 25px 0 15px 0;
+        border-bottom: 2px solid var(--divider-color);
+        padding-bottom: 8px;
+      }
+
+      .instructions-section {
+        margin: 20px 0;
+      }
+
+      .instructions-list {
+        padding-left: 20px;
+      }
+
+      .instructions-list li {
+        margin-bottom: 12px;
+        padding-left: 8px;
+      }
+
+      .qr-section {
+        margin: 30px 0;
+        padding: 25px;
+        background: #f8fafc;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid var(--divider-color);
+      }
+
+      .qr-title {
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: var(--text-primary);
+        font-size: 17px;
+      }
+
+      .qr-image {
+        display: block;
+        width: 200px;
+        height: 200px;
+        margin: 20px auto;
+        border: 1px solid var(--divider-color);
+        padding: 15px;
+        background-color: white;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      .qr-note {
+        color: var(--text-secondary);
+        font-size: 13px;
+        text-align: center;
+        margin-top: 15px;
+        font-style: italic;
+      }
+
+      .secret-section {
+        margin: 30px 0;
+      }
+
+      .secret-title {
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: var(--text-primary);
+      }
+
+      .secret-code {
+        background: #edf2f7;
+        padding: 15px;
+        border-radius: 6px;
+        font-family: 'Courier New', monospace;
+        font-size: 18px;
+        letter-spacing: 2px;
+        text-align: center;
+        word-break: break-all;
+        color: var(--text-primary);
+        border: 1px dashed var(--divider-color);
+      }
+
+      .warning-message {
+        margin: 35px 0 20px 0;
+        padding: 18px;
+        background-color: #fff5f5;
+        border-left: 4px solid var(--error-color);
+        border-radius: 0 4px 4px 0;
+      }
+
+      .warning-title {
+        font-weight: 600;
+        color: var(--error-color);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+      }
+
+      .warning-title svg {
+        margin-right: 8px;
+      }
+
+      .warning-text {
+        color: var(--text-secondary);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .apps-recommendation {
+        margin: 25px 0;
+        padding: 15px;
+        background: #f0fff4;
+        border-radius: 6px;
+        border-left: 4px solid var(--primary-light);
+      }
+
+      .apps-title {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 10px;
+      }
+
+      .apps-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 15px;
+      }
+
+      .app-item {
+        flex: 1;
+        min-width: 120px;
+        text-align: center;
+      }
+
+      .app-name {
+        font-size: 14px;
+        margin-top: 8px;
+        color: var(--text-secondary);
+      }
+
+      .email-footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid var(--divider-color);
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 13px;
+      }
+
+      .bold-text {
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .highlight {
+        background-color: #ebf8ff;
+        padding: 2px 4px;
+        border-radius: 3px;
+        color: #3182ce;
+      }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <img src="../assets/images/logo-Sfondo.png" alt="Logo Sistema de Archivos del Bicentenario" class="logo">
+            <h1 class="email-title">Protege tu cuenta</h1>
+            <div class="email-subtitle">Configuración de Autenticación en Dos Pasos (2FA)</div>
+        </div>
+        
+        <div class="email-content">
+            <p class="intro-text">
+                Hemos activado la autenticación en dos pasos para tu cuenta en el <span class="bold-text">Sistema de Archivos de Testimonios del Bicentenario</span>. 
+                Este sistema añade una capa adicional de seguridad para proteger tu información.
+            </p>
+            
+            <h2 class="section-title">Configuración requerida</h2>
+            
+            <div class="instructions-section">
+                <p class="bold-text">Por favor sigue estos pasos para completar la configuración:</p>
+                <ol class="instructions-list">
+                    <li>
+                        <span class="bold-text">Descarga una aplicación de autenticación</span> como Google Authenticator, Authy o Microsoft Authenticator en tu dispositivo móvil
+                    </li>
+                    <li>Abre la aplicación y selecciona la opción para <span class="highlight">agregar una nueva cuenta</span></li>
+                    <li>
+                        Escanea el código QR que aparece a continuación o ingresa manualmente el código secreto proporcionado
+                    </li>
+                    <li>
+                        Una vez configurado, la aplicación generará códigos de 6 dígitos que deberás ingresar al iniciar sesión
+                    </li>
+                </ol>
+            </div>
+            
+            <div class="qr-section">
+                <p class="qr-title">Escanea este código QR con tu aplicación:</p>
+                <img src="https://ejemplo.com/qr-code.png" alt="Código QR para configuración 2FA" class="qr-image">
+                <p class="qr-note">
+                    Si no puedes ver la imagen del código QR, asegúrate de permitir la visualización de imágenes en tu cliente de correo
+                </p>
+            </div>
+            
+            <div class="secret-section">
+                <p class="secret-title">
+                    Si no puedes escanear el código QR, ingresa este código manualmente:
+                </p>
+                <div class="secret-code">${secret}</div>
+            </div>
+            
+            <div class="warning-message">
+                <div class="warning-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    ¡IMPORTANTE!
+                </div>
+                <p class="warning-text">
+                    Guarda este código en un lugar seguro. Será necesario para recuperar el acceso a tu cuenta si pierdes o cambias de dispositivo. 
+                    Recomendamos guardarlo en un gestor de contraseñas o escribirlo en un lugar seguro.
+                </p>
+            </div>
+            
+            <div class="email-footer">
+                <p>Sistema de Archivos de Testimonios del Bicentenario &copy; 2025</p>
+                <p>Este es un mensaje automático, por favor no respondas a este correo.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

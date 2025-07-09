@@ -1,8 +1,9 @@
 import { deleteMedia } from "@app/lib/cloudinary";
 import {
   type TestimonyInput,
+  type TestimonyWithRelations,
   inputTestimonySchema,
-} from "@app/models/testimony";
+} from "@app/models/testimonio";
 import { PrismaClient, Prisma } from "@generated/prisma";
 import { parse, partial } from "valibot";
 import { NotificacionModel } from "@app/models/notificacion.model";
@@ -45,6 +46,25 @@ const rolePermissions: Record<RoleId, RolePermission> = {
   },
 };
 
+export interface SearchParams {
+  keyword?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  authorId?: number;
+  category?: string;
+  tag?: string;
+  eventId?: number;
+  page?: number;
+  limit?: number;
+  highlighted?: boolean;
+  status?: string;
+  sort?: string;
+  order?: "asc" | "desc";
+  fields?: string[];
+  cursor?: string;
+  include?: string[];
+}
+
 export const testimonyService = {
   createTestimony: async (data: TestimonyInput, userId: number) => {
     const validatedData = parse(inputTestimonySchema, data);
@@ -66,7 +86,7 @@ export const testimonyService = {
           : new Prisma.Decimal(0),
         estado: {
           connect: {
-            id_estado: 1, // Estado pendiente
+            id_estado: 1, 
           },
         },
         medio: {
@@ -96,7 +116,6 @@ export const testimonyService = {
       },
     });
 
-    // Crear notificaciones para administradores y curadores
     await NotificacionModel.notificarNuevoTestimonio(
       testimony.id_testimonio,
       userId
@@ -321,31 +340,10 @@ export const testimonyService = {
   },
 
   searchTestimonies: async (
-    params: {
-      keyword?: string;
-      dateFrom?: string;
-      dateTo?: string;
-      authorId?: number;
-      category?: string;
-      tag?: string;
-      eventId?: number;
-      page?: number;
-      limit?: number;
-      highlighted?: boolean;
-      status?: string;
-    },
+    params: SearchParams,
     userId: number,
     userRole: number
   ) => {
-    console.log(
-      "Parámetros de búsqueda:",
-      params,
-      "Usuario ID:",
-      userId,
-      "Rol:",
-      userRole
-    );
-
     const permissions =
       rolePermissions[userRole as RoleId] || rolePermissions[4];
     const where: Prisma.testimoniosWhereInput = {};
@@ -410,14 +408,19 @@ export const testimonyService = {
       };
     }
 
-    // Implementación de paginación
-    const page = params.page ?? 1;
-    const limit = params.highlighted ? 3 : params.limit ?? 5;
-    const skip = (page - 1) * limit;
+    let cursorClause = {};
+    if (params.cursor) {
+      const [cursorField, cursorValue] = params.cursor.split("|");
+      if (cursorField && cursorValue) {
+        cursorClause = {
+          [cursorField]:
+            params.order === "asc" ? { gt: cursorValue } : { lt: cursorValue },
+        };
+      }
+    }
 
-    console.log("Cláusula where de Prisma:", where);
-
-    const select = {
+    // Configuración de select basado en fields
+    const baseSelect = {
       id_testimonio: true,
       titulo: true,
       descripcion: true,
@@ -429,69 +432,121 @@ export const testimonyService = {
       created_at: true,
       estado: { select: { nombre: true } },
       medio: { select: { nombre: true } },
-      testimonios_categorias: {
-        include: { categorias: { select: { nombre: true } } },
-      },
-      testimonios_etiquetas: {
-        include: { etiquetas: { select: { nombre: true } } },
-      },
-      testimonios_eventos: {
-        include: { eventos_historicos: { select: { nombre: true } } },
-      },
       usuarios_testimonios_subido_porTousuarios: { select: { nombre: true } },
     };
 
-    const [testimonies, total] = await Promise.all([
-      prisma.testimonios.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: params.highlighted
-          ? [{ calificaciones: { _count: "desc" } }, { created_at: "desc" }]
-          : { created_at: "desc" },
-        select,
-      }),
-      prisma.testimonios.count({ where }),
-    ]);
+    // Configuración de include basado en parámetros
+    const include: Record<string, any> = {};
+    if (params.include?.includes("categories")) {
+      include.testimonios_categorias = {
+        include: { categorias: { select: { nombre: true } } },
+      };
+    }
+    if (params.include?.includes("tags")) {
+      include.testimonios_etiquetas = {
+        include: { etiquetas: { select: { nombre: true } } },
+      };
+    }
+    if (params.include?.includes("events")) {
+      include.testimonios_eventos = {
+        include: { eventos_historicos: { select: { nombre: true } } },
+      };
+    }
 
-    const testimoniosConFavoritos = await Promise.all(
-      testimonies.map(async (t) => {
-        const favoriteCount = await prisma.colecciones_testimonios.count({
-          where: {
-            id_testimonio: t.id_testimonio,
-            colecciones: {
-              titulo: "Favoritos",
-            },
-          },
-        });
-        return {
-          id: t.id_testimonio,
-          title: t.titulo,
-          description: t.descripcion,
-          content: t.contenido_texto,
-          url: t.url_medio,
-          duration: t.duracion,
-          latitude: t.latitud ? Number(t.latitud) : null,
-          longitude: t.longitud ? Number(t.longitud) : null,
-          createdAt: t.created_at,
-          status: t.estado.nombre,
-          format: t.medio.nombre,
-          author: t.usuarios_testimonios_subido_porTousuarios.nombre,
-          categories: t.testimonios_categorias.map(
-            (tc) => tc.categorias.nombre
-          ),
-          tags: t.testimonios_etiquetas.map((te) => te.etiquetas.nombre),
-          event: t.testimonios_eventos[0]?.eventos_historicos?.nombre,
-          favoriteCount,
-        };
-      })
-    );
+    const orderBy:
+      | Prisma.testimoniosOrderByWithRelationInput
+      | Prisma.testimoniosOrderByWithRelationInput[] = params.sort
+      ? { [params.sort]: params.order || "desc" }
+      : params.highlighted
+      ? [
+          { calificaciones: { _count: "desc" as const } },
+          { created_at: "desc" as const },
+        ]
+      : { created_at: "desc" as const };
+
+    // Límite
+    const limit = params.highlighted ? 3 : params.limit ?? 10;
+
+    // Consulta principal
+    const testimonies = await prisma.testimonios.findMany({
+    where: { ...where, ...cursorClause },
+    take: limit,
+    orderBy,
+    select: {
+      ...baseSelect,
+      ...(params.include?.includes('categories') && { 
+        testimonios_categorias: { 
+          include: { categorias: { select: { nombre: true } } } 
+        } 
+      }),
+      ...(params.include?.includes('tags') && { 
+        testimonios_etiquetas: { 
+          include: { etiquetas: { select: { nombre: true } } } 
+        } 
+      }),
+      ...(params.include?.includes('events') && { 
+        testimonios_eventos: { 
+          include: { eventos_historicos: { select: { nombre: true } } } 
+        } 
+      }),
+    },
+  }) as TestimonyWithRelations[];
+
+    const total = await prisma.testimonios.count({ where });
+
+    const processedTestimonies = testimonies.map((t) => ({
+    id: t.id_testimonio,
+    title: t.titulo,
+    description: t.descripcion,
+    content: t.contenido_texto,
+    url: t.url_medio,
+    duration: t.duracion,
+    latitude: t.latitud ? Number(t.latitud) : null,
+    longitude: t.longitud ? Number(t.longitud) : null,
+    createdAt: t.created_at,
+    status: t.estado.nombre,
+    format: t.medio.nombre,
+    author: t.usuarios_testimonios_subido_porTousuarios.nombre,
+    ...(params.include?.includes('categories') && { 
+      categories: t.testimonios_categorias?.map(tc => tc.id_categoria) || [] 
+    }),
+    ...(params.include?.includes('tags') && { 
+      tags: t.testimonios_etiquetas?.map(te => te.id_etiquetas) || [] 
+    }),
+    ...(params.include?.includes('events') && { 
+      event: t.testimonios_eventos?.[0]?.id_evento || null 
+    }),
+  }));
+
+    const lastItem = testimonies[testimonies.length - 1];
+    const sortField = params.sort || "created_at";
+    let cursorValue: string | null = null;
+    if (lastItem) {
+      switch (sortField) {
+        case "created_at":
+          cursorValue = lastItem.created_at.toISOString();
+          break;
+        case "titulo":
+          cursorValue = lastItem.titulo;
+          break;
+        case "duracion":
+          cursorValue = lastItem.duracion.toString();
+          break;
+
+        default:
+          cursorValue = lastItem.created_at.toISOString();
+      }
+    }
+
+    const newCursor = cursorValue ? `${sortField}|${cursorValue}` : null;
 
     return {
-      data: testimoniosConFavoritos,
-      total,
-      page,
-      limit,
+      data: processedTestimonies,
+      pagination: {
+        total,
+        cursor: newCursor,
+        hasMore: testimonies.length === limit,
+      },
     };
   },
 
@@ -529,7 +584,6 @@ export const testimonyService = {
       include: { estado: true },
     });
 
-    // Crear notificación para el usuario que subió el testimonio
     await NotificacionModel.notificarCambioEstadoTestimonio(
       testimonyId,
       testimony.subido_por,
@@ -853,7 +907,7 @@ export const testimonyService = {
         }),
       ]);
 
-      if (!testimony.url_medio) {
+      if (!testimony.url_medio || testimony.url_medio == undefined) {
         throw new Error("El testimonio no tiene una URL de medio válida");
       }
 

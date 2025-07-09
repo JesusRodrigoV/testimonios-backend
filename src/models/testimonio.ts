@@ -1,3 +1,4 @@
+import type { Prisma } from "@generated/prisma";
 import {
   array,
   maxLength,
@@ -52,3 +53,29 @@ export const inputTestimonySchema = object({
 });
 
 export type TestimonyInput = InferInput<typeof inputTestimonySchema>;
+
+export type TestimonyWithRelations = Prisma.testimoniosGetPayload<{
+  select: {
+    id_testimonio: true;
+    titulo: true;
+    descripcion: true;
+    contenido_texto: true;
+    url_medio: true;
+    duracion: true;
+    latitud: true;
+    longitud: true;
+    created_at: true;
+    estado: { select: { nombre: true } };
+    medio: { select: { nombre: true } };
+    usuarios_testimonios_subido_porTousuarios: { select: { nombre: true } };
+    testimonios_categorias?: {
+      include: { categorias: { select: { nombre: true } } };
+    };
+    testimonios_etiquetas?: {
+      include: { etiquetas: { select: { nombre: true } } };
+    };
+    testimonios_eventos?: {
+      include: { eventos_historicos: { select: { nombre: true } } };
+    };
+  };
+}>;

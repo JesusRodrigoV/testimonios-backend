@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
-import { testimonyService } from "@app/services/media";
+import { testimonyService, type SearchParams } from "@app/services/testimonio.service";
 import { parse, partial, ValiError } from "valibot";
-import { inputTestimonySchema } from "@app/models/testimony";
+import { inputTestimonySchema } from "@app/models/testimonio";
 
 export class TestimonyController {
   static async create(req: Request, res: Response) {
@@ -98,7 +98,7 @@ export class TestimonyController {
       const count = await testimonyService.getTestimonyCountByUserId(
         req.user.id_usuario
       );
-console.log("Count by user ID:", count);
+      console.log("Count by user ID:", count);
       res.json(count);
     } catch (error) {
       console.error("Error en getCountByUserId:", error);
@@ -111,43 +111,41 @@ console.log("Count by user ID:", count);
 
   static async search(req: Request, res: Response) {
     try {
-      const params: {
-        keyword?: string;
-        dateFrom?: string;
-        dateTo?: string;
-        authorId?: number;
-        category?: string;
-        tag?: string;
-        eventId?: number;
-        page?: number;
-        limit?: number;
-        highlighted?: boolean;
-        status?: string;
-      } = {
+      // Parsear parámetros de consulta
+      const params: SearchParams = {
         keyword: req.query.keyword as string,
         dateFrom: req.query.dateFrom as string,
         dateTo: req.query.dateTo as string,
-        authorId: req.query.authorId
-          ? parseInt(req.query.authorId as string)
-          : undefined,
+        authorId: req.query.authorId ? parseInt(req.query.authorId as string) : undefined,
         category: req.query.category as string,
         tag: req.query.tag as string,
-        eventId: req.query.eventId
-          ? parseInt(req.query.eventId as string)
-          : undefined,
+        eventId: req.query.eventId ? parseInt(req.query.eventId as string) : undefined,
         page: req.query.page ? parseInt(req.query.page as string) : undefined,
-        limit: req.query.limit
-          ? parseInt(req.query.limit as string)
-          : undefined,
-        highlighted: req.query.highlighted === "true" ? true : undefined,
+        limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
+        highlighted: req.query.highlighted === "true",
         status: req.query.status as string,
+        sort: req.query.sort as string || 'created_at',
+        order: req.query.order === 'asc' ? 'asc' : 'desc',
+        fields: req.query.fields?.toString().split(','),
+        cursor: req.query.cursor as string,
+        include: req.query.include?.toString().split(','),
       };
+
+      // Validar parámetros de ordenamiento
+      const validSortFields = ['created_at', 'titulo', 'duracion'];
+      if (params.sort && !validSortFields.includes(params.sort)) {
+        return res.status(400).json({
+          error: "Campo de ordenamiento inválido",
+          validFields: validSortFields
+        });
+      }
 
       const result = await testimonyService.searchTestimonies(
         params,
         req.user?.id_usuario || 0,
         req.user?.id_rol || 4
       );
+
       res.json(result);
     } catch (error) {
       console.error("Error en search:", error);
